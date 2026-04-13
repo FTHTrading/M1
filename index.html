@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>M1 · FTH Trading — Sovereign Finance Platform</title>
+  <meta name="description" content="M1 is FTH Trading's institutional-grade financial execution platform — stablecoin settlement, multi-chain payments, AI-powered compliance, and regulatory-ready infrastructure." />
+  <style>
+    :root {
+      --bg:        #08090f;
+      --surface:   #0f1120;
+      --card:      #141729;
+      --border:    #1e2240;
+      --primary:   #0099ff;
+      --accent:    #7c3aed;
+      --green:     #00e676;
+      --orange:    #ff6b35;
+      --yellow:    #ffa502;
+      --text:      #e8eaf0;
+      --muted:     #6b7280;
+      --radius:    12px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    /* ─── NAV ─────────────────────────────── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(8,9,15,0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 5%;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 64px;
+    }
+
+    .nav-logo {
+      font-size: 1.25rem; font-weight: 800; letter-spacing: -0.5px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+    .nav-links a {
+      color: var(--muted); text-decoration: none; font-size: 0.9rem;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    .nav-cta {
+      background: var(--primary); color: #fff !important;
+      padding: .5rem 1.25rem; border-radius: 6px;
+      font-weight: 600; font-size: 0.875rem;
+      transition: opacity .2s;
+    }
+    .nav-cta:hover { opacity: .85; }
+
+    /* ─── HERO ─────────────────────────────── */
+    .hero {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      text-align: center; padding: 8rem 5% 6rem;
+      position: relative; overflow: hidden;
+    }
+
+    .hero-glow {
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 0%,   rgba(0,153,255,.12) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 80% 60%,  rgba(124,58,237,.10) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 30% at 20% 70%,  rgba(0,230,118,.07) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: .5rem;
+      background: rgba(0,153,255,.12); border: 1px solid rgba(0,153,255,.3);
+      color: var(--primary); padding: .4rem 1rem; border-radius: 999px;
+      font-size: .8rem; font-weight: 600; letter-spacing: .05em;
+      text-transform: uppercase; margin-bottom: 2rem;
+    }
+
+    .hero-badge .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: .5; transform: scale(1.4); }
+    }
+
+    h1 {
+      font-size: clamp(2.5rem, 6vw, 5rem);
+      font-weight: 900; line-height: 1.05; letter-spacing: -2px;
+      margin-bottom: 1.5rem;
+    }
+
+    .grad-text {
+      background: linear-gradient(135deg, #ffffff 30%, var(--primary) 70%, var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .hero-sub {
+      font-size: clamp(1rem, 2vw, 1.25rem);
+      color: var(--muted); max-width: 680px; margin: 0 auto 3rem;
+      line-height: 1.8;
+    }
+
+    .hero-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: #fff; padding: .9rem 2rem; border-radius: 8px;
+      font-weight: 700; font-size: 1rem; text-decoration: none;
+      transition: transform .2s, box-shadow .2s;
+      box-shadow: 0 4px 24px rgba(0,153,255,.35);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,153,255,.5); }
+
+    .btn-ghost {
+      border: 1px solid var(--border); color: var(--text);
+      padding: .9rem 2rem; border-radius: 8px;
+      font-weight: 600; font-size: 1rem; text-decoration: none;
+      transition: border-color .2s, background .2s;
+    }
+    .btn-ghost:hover { border-color: var(--primary); background: rgba(0,153,255,.06); }
+
+    /* ─── STAT BAR ─────────────────────────── */
+    .stats-bar {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 2rem 5%;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 2rem; text-align: center;
+    }
+
+    .stat-val {
+      font-size: 2rem; font-weight: 800; letter-spacing: -1px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .stat-label { font-size: .8rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-top: .25rem; }
+
+    /* ─── SECTIONS ─────────────────────────── */
+    section { padding: 6rem 5%; }
+
+    .section-tag {
+      display: inline-block;
+      font-size: .75rem; font-weight: 700; letter-spacing: .12em;
+      text-transform: uppercase; color: var(--primary);
+      margin-bottom: 1rem;
+    }
+
+    h2 {
+      font-size: clamp(1.8rem, 3.5vw, 3rem);
+      font-weight: 800; letter-spacing: -1px; line-height: 1.1;
+      margin-bottom: 1rem;
+    }
+
+    .section-desc {
+      color: var(--muted); font-size: 1.05rem;
+      max-width: 600px; line-height: 1.8;
+    }
+
+    /* ─── PILLARS ──────────────────────────── */
+    .pillars { background: var(--surface); }
+
+    .pillars-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem; margin-top: 3.5rem;
+    }
+
+    .pillar-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      transition: border-color .25s, transform .25s;
+      position: relative; overflow: hidden;
+    }
+
+    .pillar-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--accent-color, var(--primary));
+    }
+
+    .pillar-card:hover { border-color: var(--primary); transform: translateY(-4px); }
+
+    .pillar-icon {
+      width: 48px; height: 48px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; margin-bottom: 1.25rem;
+      background: var(--icon-bg, rgba(0,153,255,.12));
+    }
+
+    .pillar-title { font-size: 1.15rem; font-weight: 700; margin-bottom: .6rem; }
+    .pillar-desc { color: var(--muted); font-size: .9rem; line-height: 1.7; }
+
+    /* ─── HOW IT WORKS ─────────────────────── */
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem; margin-top: 3.5rem;
+      position: relative;
+    }
+
+    .step-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      text-align: center;
+      position: relative;
+    }
+
+    .step-num {
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: #fff; font-weight: 800; font-size: 1.25rem;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 1.25rem;
+      box-shadow: 0 0 24px rgba(0,153,255,.3);
+    }
+
+    .step-title { font-weight: 700; font-size: 1rem; margin-bottom: .5rem; }
+    .step-desc { color: var(--muted); font-size: .875rem; line-height: 1.7; }
+
+    /* ─── FLOW DIAGRAM ─────────────────────── */
+    .flow-section { background: var(--surface); }
+
+    .flow-diagram {
+      margin-top: 3.5rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2.5rem;
+      overflow-x: auto;
+    }
+
+    .flow-row {
+      display: flex; align-items: center;
+      gap: 0; flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .flow-node {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: .75rem 1.25rem;
+      text-align: center;
+      min-width: 110px;
+      position: relative;
+    }
+
+    .flow-node .fn-label {
+      font-size: .7rem; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .08em;
+    }
+
+    .flow-node .fn-name {
+      font-size: .9rem; font-weight: 700;
+      margin-top: .2rem;
+    }
+
+    .flow-node.primary-node { border-color: var(--primary); }
+    .flow-node.accent-node  { border-color: var(--accent); }
+    .flow-node.green-node   { border-color: var(--green); }
+    .flow-node.orange-node  { border-color: var(--orange); }
+
+    .flow-arrow {
+      color: var(--muted); font-size: 1.4rem;
+      padding: 0 .5rem; user-select: none;
+    }
+
+    .flow-label {
+      font-size: .7rem; text-align: center; color: var(--muted);
+      padding: .2rem .5rem;
+    }
+
+    .flow-group {
+      display: flex; flex-direction: column; align-items: center;
+    }
+
+    /* ─── CAPABILITIES ─────────────────────── */
+    .capabilities-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem; margin-top: 3.5rem;
+    }
+
+    .cap-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+    }
+
+    .cap-header {
+      display: flex; align-items: center; gap: .75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .cap-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .cap-title { font-weight: 700; font-size: 1.05rem; }
+
+    .cap-list { list-style: none; }
+
+    .cap-list li {
+      display: flex; align-items: flex-start; gap: .6rem;
+      padding: .5rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: .9rem; color: var(--muted);
+    }
+
+    .cap-list li:last-child { border-bottom: none; padding-bottom: 0; }
+
+    .cap-list li::before {
+      content: '✓'; color: var(--green);
+      font-weight: 700; font-size: .8rem;
+      margin-top: .15rem; flex-shrink: 0;
+    }
+
+    /* ─── ROADMAP ──────────────────────────── */
+    .roadmap-section { background: var(--surface); }
+
+    .roadmap-list {
+      margin-top: 3.5rem;
+      display: flex; flex-direction: column; gap: 1.25rem;
+    }
+
+    .roadmap-item {
+      display: flex; gap: 1.5rem; align-items: flex-start;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.75rem 2rem;
+      transition: border-color .2s;
+    }
+
+    .roadmap-item:hover { border-color: var(--primary); }
+
+    .rm-badge {
+      flex-shrink: 0;
+      width: 90px;
+      padding: .4rem .75rem;
+      border-radius: 6px;
+      text-align: center;
+      font-size: .75rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+    }
+
+    .rm-now   { background: rgba(0,230,118,.12); color: var(--green);  border: 1px solid rgba(0,230,118,.25); }
+    .rm-next  { background: rgba(0,153,255,.12); color: var(--primary); border: 1px solid rgba(0,153,255,.25); }
+    .rm-future{ background: rgba(124,58,237,.12); color: #a78bfa;       border: 1px solid rgba(124,58,237,.25); }
+
+    .rm-content { flex: 1; }
+    .rm-title { font-weight: 700; font-size: 1.05rem; margin-bottom: .35rem; }
+    .rm-desc  { color: var(--muted); font-size: .9rem; line-height: 1.7; }
+
+    .rm-items {
+      display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .75rem;
+    }
+
+    .rm-tag {
+      background: rgba(255,255,255,.05);
+      border: 1px solid var(--border);
+      color: var(--muted); font-size: .75rem;
+      padding: .25rem .65rem; border-radius: 4px;
+    }
+
+    /* ─── CTA ──────────────────────────────── */
+    .cta-section {
+      text-align: center;
+      background: linear-gradient(135deg,
+        rgba(0,153,255,.06) 0%,
+        rgba(124,58,237,.06) 50%,
+        rgba(0,153,255,.06) 100%);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cta-section h2 { margin-bottom: 1rem; }
+    .cta-section p  { color: var(--muted); max-width: 520px; margin: 0 auto 2.5rem; line-height: 1.8; }
+
+    .cta-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+    /* ─── FOOTER ───────────────────────────── */
+    footer {
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      padding: 2.5rem 5%;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 1rem;
+    }
+
+    .footer-logo {
+      font-weight: 800; font-size: 1rem;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .footer-links { display: flex; gap: 2rem; list-style: none; }
+    .footer-links a  { color: var(--muted); text-decoration: none; font-size: .85rem; }
+    .footer-links a:hover { color: var(--text); }
+
+    .footer-copy { color: var(--muted); font-size: .8rem; }
+
+    /* ─── SCROLL REVEAL ─────────────────────── */
+    .reveal { opacity: 0; transform: translateY(28px); transition: opacity .55s ease, transform .55s ease; }
+    .reveal.visible { opacity: 1; transform: none; }
+
+    /* ─── RESP ──────────────────────────────── */
+    @media (max-width: 700px) {
+      .nav-links { display: none; }
+      .flow-row  { flex-direction: column; }
+      .flow-arrow { transform: rotate(90deg); }
+      footer     { flex-direction: column; text-align: center; }
+      .footer-links { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <span class="nav-logo">M1 · FTH Trading</span>
+  <ul class="nav-links">
+    <li><a href="#what-we-do">Platform</a></li>
+    <li><a href="#how-it-works">How It Works</a></li>
+    <li><a href="#capabilities">Capabilities</a></li>
+    <li><a href="#roadmap">Roadmap</a></li>
+    <li><a href="#contact" class="nav-cta">Get Started</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div style="position:relative; z-index:1;">
+    <div class="hero-badge">
+      <span class="dot"></span>
+      Platform Live · Apostle Chain · Chain ID 7332
+    </div>
+    <h1>
+      <span class="grad-text">Institutional Finance,</span><br />
+      Rebuilt for the<br />Modern Economy
+    </h1>
+    <p class="hero-sub">
+      M1 is FTH Trading's sovereign execution platform — connecting regulated financial
+      institutions, stablecoin issuance, multi-chain settlement, and AI-powered payment
+      rails into one unified, compliant infrastructure.
+    </p>
+    <div class="hero-actions">
+      <a href="#how-it-works" class="btn-primary">See How It Works</a>
+      <a href="#capabilities" class="btn-ghost">View Capabilities</a>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="reveal">
+    <div class="stat-val">99.97%</div>
+    <div class="stat-label">Platform Uptime</div>
+  </div>
+  <div class="reveal">
+    <div class="stat-val">&lt; 3s</div>
+    <div class="stat-label">Settlement Time</div>
+  </div>
+  <div class="reveal">
+    <div class="stat-val">7</div>
+    <div class="stat-label">Supported Blockchains</div>
+  </div>
+  <div class="reveal">
+    <div class="stat-val">35+</div>
+    <div class="stat-label">AI Mesh Agents</div>
+  </div>
+  <div class="reveal">
+    <div class="stat-val">SEC / FINRA</div>
+    <div class="stat-label">Compliant Architecture</div>
+  </div>
+</div>
+
+<!-- WHAT WE DO -->
+<section class="pillars" id="what-we-do">
+  <div class="reveal">
+    <span class="section-tag">The Platform</span>
+    <h2>Everything a Modern<br/>Financial Institution Needs</h2>
+    <p class="section-desc">
+      Four integrated layers that work together to give your organization
+      the speed of DeFi with the security and compliance of traditional finance.
+    </p>
+  </div>
+
+  <div class="pillars-grid">
+    <div class="pillar-card reveal" style="--accent-color:#0099ff;">
+      <div class="pillar-icon" style="--icon-bg:rgba(0,153,255,.12);">🏦</div>
+      <div class="pillar-title">Treasury & Settlement</div>
+      <div class="pillar-desc">
+        Issue and redeem USDC/USDT stablecoins with full double-entry accounting,
+        bank wire integration, and automated reconciliation. Every dollar tracked,
+        every transaction auditable.
+      </div>
+    </div>
+
+    <div class="pillar-card reveal" style="--accent-color:#ff6b35;">
+      <div class="pillar-icon" style="--icon-bg:rgba(255,107,53,.12);">⛓️</div>
+      <div class="pillar-title">Multi-Chain Infrastructure</div>
+      <div class="pillar-desc">
+        Settle across XRPL, Stellar, Ethereum, Polygon, Base, Solana, and Tron
+        from a single API. Our Apostle Chain provides a sovereign settlement ledger
+        anchoring all cross-chain activity.
+      </div>
+    </div>
+
+    <div class="pillar-card reveal" style="--accent-color:#7c3aed;">
+      <div class="pillar-icon" style="--icon-bg:rgba(124,58,237,.12);">🤖</div>
+      <div class="pillar-title">AI-Powered Execution</div>
+      <div class="pillar-desc">
+        Finn, our sovereign AI, and ClawBot v2 handle automated workflows, real-time
+        compliance checks, and AI-to-AI payment rails via the x402 protocol — cutting
+        manual overhead by over 80%.
+      </div>
+    </div>
+
+    <div class="pillar-card reveal" style="--accent-color:#00e676;">
+      <div class="pillar-icon" style="--icon-bg:rgba(0,230,118,.12);">🛡️</div>
+      <div class="pillar-title">Regulatory Compliance</div>
+      <div class="pillar-desc">
+        SEC and FINRA-aligned architecture with AML/KYC checks, multi-signature
+        approval flows, immutable audit trails, and automated regulatory reporting
+        built in — not bolted on.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how-it-works">
+  <div class="reveal">
+    <span class="section-tag">How It Works</span>
+    <h2>Simple Steps, Powerful<br/>Infrastructure Behind Them</h2>
+    <p class="section-desc">
+      From client onboarding to final settlement — here is the entire lifecycle
+      of a transaction on M1, simplified.
+    </p>
+  </div>
+
+  <div class="steps-grid">
+    <div class="step-card reveal">
+      <div class="step-num">1</div>
+      <div class="step-title">Client Onboarding</div>
+      <div class="step-desc">
+        Entity verified through AML/KYC. Wallets and bank accounts linked.
+        Compliance profile created for the institution.
+      </div>
+    </div>
+
+    <div class="step-card reveal">
+      <div class="step-num">2</div>
+      <div class="step-title">Request Submitted</div>
+      <div class="step-desc">
+        Client initiates a mint or redemption via the dashboard or API.
+        The request is logged, referenced, and held pending compliance review.
+      </div>
+    </div>
+
+    <div class="step-card reveal">
+      <div class="step-num">3</div>
+      <div class="step-title">Compliance Gate</div>
+      <div class="step-desc">
+        Automated policy evaluation runs in under 100 ms. Flagged transactions
+        are held for human review. Cleared transactions advance automatically.
+      </div>
+    </div>
+
+    <div class="step-card reveal">
+      <div class="step-num">4</div>
+      <div class="step-title">Approval Flow</div>
+      <div class="step-desc">
+        Multi-signature approval by authorized operators. No single point of
+        authority — every large transaction requires quorum sign-off.
+      </div>
+    </div>
+
+    <div class="step-card reveal">
+      <div class="step-num">5</div>
+      <div class="step-title">Funds Confirmed</div>
+      <div class="step-desc">
+        Wire reference matched to the request. Bank funding confirmed. The
+        settlement engine picks up the job from the queue automatically.
+      </div>
+    </div>
+
+    <div class="step-card reveal">
+      <div class="step-num">6</div>
+      <div class="step-title">Settlement</div>
+      <div class="step-desc">
+        Stablecoins minted on the target chain. Confirmed on Apostle Chain.
+        Journal entry posted. Client wallet credited. Done in under 3 seconds.
+      </div>
+    </div>
+  </div>
+
+  <!-- Flow diagram -->
+  <div class="flow-section" style="background:transparent; margin-top:3rem;">
+    <div class="flow-diagram reveal">
+      <p style="font-size:.75rem; color:var(--muted); text-align:center; margin-bottom:2rem; text-transform:uppercase; letter-spacing:.1em;">Transaction Lifecycle</p>
+      <div class="flow-row">
+        <div class="flow-group">
+          <div class="flow-node">
+            <div class="fn-label">Client</div>
+            <div class="fn-name">📋 Request</div>
+          </div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-group">
+          <div class="flow-node accent-node">
+            <div class="fn-label">Gate</div>
+            <div class="fn-name">🛡️ Compliance</div>
+          </div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-group">
+          <div class="flow-node" style="border-color:var(--yellow);">
+            <div class="fn-label">Ops</div>
+            <div class="fn-name">✅ Approval</div>
+          </div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-group">
+          <div class="flow-node orange-node">
+            <div class="fn-label">Bank</div>
+            <div class="fn-name">🏦 Wire In</div>
+          </div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-group">
+          <div class="flow-node primary-node">
+            <div class="fn-label">Chain</div>
+            <div class="fn-name">⛓️ Apostle</div>
+          </div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-group">
+          <div class="flow-node" style="border-color:var(--primary);">
+            <div class="fn-label">Provider</div>
+            <div class="fn-name">⭕ Circle</div>
+          </div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-group">
+          <div class="flow-node green-node">
+            <div class="fn-label">Final</div>
+            <div class="fn-name">✅ Settled</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CAPABILITIES -->
+<section class="capabilities-section" id="capabilities" style="background:var(--surface);">
+  <div class="reveal">
+    <span class="section-tag">Capabilities</span>
+    <h2>What We Can Do<br/>For You Today</h2>
+    <p class="section-desc">
+      A complete financial operating system — not a collection of tools, but
+      a unified platform that scales with your business.
+    </p>
+  </div>
+
+  <div class="capabilities-grid">
+    <div class="cap-card reveal">
+      <div class="cap-header">
+        <div class="cap-dot" style="background:var(--primary);box-shadow:0 0 8px var(--primary);"></div>
+        <div class="cap-title">Stablecoin Issuance</div>
+      </div>
+      <ul class="cap-list">
+        <li>USDC and USDT mint &amp; redeem flows</li>
+        <li>Fiat-to-stablecoin in under 3 seconds</li>
+        <li>Bank wire matching and confirmation</li>
+        <li>GAAP double-entry accounting on every transaction</li>
+        <li>Real-time reconciliation and break detection</li>
+      </ul>
+    </div>
+
+    <div class="cap-card reveal">
+      <div class="cap-header">
+        <div class="cap-dot" style="background:var(--orange);box-shadow:0 0 8px var(--orange);"></div>
+        <div class="cap-title">Multi-Chain Settlement</div>
+      </div>
+      <ul class="cap-list">
+        <li>Ethereum, Polygon, Base, Solana, Tron</li>
+        <li>XRPL and Stellar native bridges</li>
+        <li>Apostle Chain sovereign settlement ledger</li>
+        <li>Single API for all seven chains</li>
+        <li>Atomic cross-chain swap support</li>
+      </ul>
+    </div>
+
+    <div class="cap-card reveal">
+      <div class="cap-header">
+        <div class="cap-dot" style="background:var(--accent);box-shadow:0 0 8px var(--accent);"></div>
+        <div class="cap-title">AI Payment Rails</div>
+      </div>
+      <ul class="cap-list">
+        <li>x402 AI-to-AI payment protocol</li>
+        <li>35+ registered autonomous agents</li>
+        <li>ATP token metered billing per request</li>
+        <li>Finn AI for autonomous task execution</li>
+        <li>Sub-second machine-to-machine payments</li>
+      </ul>
+    </div>
+
+    <div class="cap-card reveal">
+      <div class="cap-header">
+        <div class="cap-dot" style="background:var(--green);box-shadow:0 0 8px var(--green);"></div>
+        <div class="cap-title">Regulatory Compliance</div>
+      </div>
+      <ul class="cap-list">
+        <li>SEC and FINRA-aligned infrastructure</li>
+        <li>Automated AML / KYC screening</li>
+        <li>Multi-signature approval workflows</li>
+        <li>Immutable audit event store</li>
+        <li>Automated regulatory report generation</li>
+      </ul>
+    </div>
+
+    <div class="cap-card reveal">
+      <div class="cap-header">
+        <div class="cap-dot" style="background:var(--yellow);box-shadow:0 0 8px var(--yellow);"></div>
+        <div class="cap-title">Asset Tokenization</div>
+      </div>
+      <ul class="cap-list">
+        <li>Real-world asset (RWA) tokenization platform</li>
+        <li>Fractional ownership and marketplace</li>
+        <li>Solana Token Launcher SaaS</li>
+        <li>KENNY and EVL tokens live on Polygon</li>
+        <li>NFT and compliance framework built in</li>
+      </ul>
+    </div>
+
+    <div class="cap-card reveal">
+      <div class="cap-header">
+        <div class="cap-dot" style="background:#f472b6;box-shadow:0 0 8px #f472b6;"></div>
+        <div class="cap-title">Operator Dashboard</div>
+      </div>
+      <ul class="cap-list">
+        <li>Real-time mint and redemption tracking</li>
+        <li>Entity, wallet, and bank account management</li>
+        <li>Compliance case queue with one-click review</li>
+        <li>Reconciliation breaks dashboard</li>
+        <li>Analytics and reporting exports</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ROADMAP -->
+<section class="roadmap-section" id="roadmap">
+  <div class="reveal">
+    <span class="section-tag">Roadmap</span>
+    <h2>Steps to Go Live<br/>Together</h2>
+    <p class="section-desc">
+      Here is exactly what we need to accomplish to get your institution
+      live on M1 — in order, with clear deliverables at each phase.
+    </p>
+  </div>
+
+  <div class="roadmap-list">
+    <div class="roadmap-item reveal">
+      <div class="rm-badge rm-now">Phase 1</div>
+      <div class="rm-content">
+        <div class="rm-title">Foundation &amp; Onboarding</div>
+        <div class="rm-desc">
+          Establish your legal entity on platform, complete KYC/AML verification,
+          connect your bank accounts and custodial wallets, and configure your
+          compliance policy profile.
+        </div>
+        <div class="rm-items">
+          <span class="rm-tag">Entity Setup</span>
+          <span class="rm-tag">KYC / AML</span>
+          <span class="rm-tag">Bank Account Link</span>
+          <span class="rm-tag">Wallet Provisioning</span>
+          <span class="rm-tag">Compliance Profile</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="roadmap-item reveal">
+      <div class="rm-badge rm-now">Phase 2</div>
+      <div class="rm-content">
+        <div class="rm-title">Treasury Integration</div>
+        <div class="rm-desc">
+          Connect your treasury operations: configure mint and redemption limits,
+          run test transactions in sandbox mode, integrate with your existing
+          ERP or accounting system via our API.
+        </div>
+        <div class="rm-items">
+          <span class="rm-tag">Sandbox Testing</span>
+          <span class="rm-tag">API Integration</span>
+          <span class="rm-tag">Transaction Limits</span>
+          <span class="rm-tag">Accounting Sync</span>
+          <span class="rm-tag">Approval Workflows</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="roadmap-item reveal">
+      <div class="rm-badge rm-next">Phase 3</div>
+      <div class="rm-content">
+        <div class="rm-title">Chain &amp; Settlement Go-Live</div>
+        <div class="rm-desc">
+          Select your target settlement chains, deploy smart contracts or configure
+          native bridges, and execute your first live mint transaction. Full
+          reconciliation reports go live at this phase.
+        </div>
+        <div class="rm-items">
+          <span class="rm-tag">Chain Selection</span>
+          <span class="rm-tag">Bridge Config</span>
+          <span class="rm-tag">First Live Mint</span>
+          <span class="rm-tag">Auto-Reconciliation</span>
+          <span class="rm-tag">Audit Trail Active</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="roadmap-item reveal">
+      <div class="rm-badge rm-next">Phase 4</div>
+      <div class="rm-content">
+        <div class="rm-title">AI &amp; Automation Layer</div>
+        <div class="rm-desc">
+          Enable AI-driven automation for compliance screening, wire matching,
+          and reporting. Optionally register as an agent on the x402 network
+          to participate in AI-to-AI payment flows.
+        </div>
+        <div class="rm-items">
+          <span class="rm-tag">AI Compliance Screening</span>
+          <span class="rm-tag">Auto Wire Matching</span>
+          <span class="rm-tag">Automated Reports</span>
+          <span class="rm-tag">x402 Agent Registration</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="roadmap-item reveal">
+      <div class="rm-badge rm-future">Phase 5</div>
+      <div class="rm-content">
+        <div class="rm-title">Scale &amp; Expand</div>
+        <div class="rm-desc">
+          Add asset tokenization, deploy your own branded stablecoin with USDF,
+          list tokens on partner DEX platforms, or white-label the operator
+          dashboard for your own clients.
+        </div>
+        <div class="rm-items">
+          <span class="rm-tag">RWA Tokenization</span>
+          <span class="rm-tag">Custom Stablecoin</span>
+          <span class="rm-tag">DEX Listing</span>
+          <span class="rm-tag">White-Label Dashboard</span>
+          <span class="rm-tag">Multi-Entity Expansion</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section" id="contact">
+  <div class="reveal">
+    <span class="section-tag">Ready to Start</span>
+    <h2>Let's Build This<br/>Together</h2>
+    <p>
+      Whether you are moving fiat into stablecoins, settling across chains,
+      or building the next generation of AI-native financial applications —
+      M1 is ready to power it.
+    </p>
+    <div class="cta-actions">
+      <a href="mailto:contact@fthtrading.io" class="btn-primary">Contact FTH Trading</a>
+      <a href="https://github.com/FTHTrading/M1" target="_blank" rel="noopener" class="btn-ghost">View on GitHub</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <span class="footer-logo">M1 · FTH Trading</span>
+  <ul class="footer-links">
+    <li><a href="#what-we-do">Platform</a></li>
+    <li><a href="#how-it-works">How It Works</a></li>
+    <li><a href="#capabilities">Capabilities</a></li>
+    <li><a href="#roadmap">Roadmap</a></li>
+  </ul>
+  <span class="footer-copy">© 2026 FTH Trading · All rights reserved</span>
+</footer>
+
+<script>
+  // Scroll reveal
+  const observer = new IntersectionObserver(
+    (entries) => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }),
+    { threshold: 0.12 }
+  );
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>
