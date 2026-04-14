@@ -108,7 +108,7 @@ export default function RedeemPage() {
         asset:            form.asset,
         network:          form.network,
         requestedUnits:   form.requestedUnits,
-        memo: form.memo || undefined,
+        ...(form.memo ? { memo: form.memo } : {}),
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["redemption-requests"] });

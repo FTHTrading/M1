@@ -12,10 +12,10 @@ export async function adminRoutes(fastify: FastifyInstance): Promise<void> {
       select: {
         id: true,
         email: true,
-        fullName: true,
-        isActive: true,
+        name: true,
+        status: true,
         createdAt: true,
-        userRoles: { include: { role: { select: { name: true } } } },
+        roles: { include: { role: { select: { name: true } } } },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -31,14 +31,14 @@ export async function adminRoutes(fastify: FastifyInstance): Promise<void> {
 
       const [items, total] = await Promise.all([
         db.auditLog.findMany({
-          where: req.query.resourceType ? { resourceType: req.query.resourceType } : {},
-          include: { user: { select: { fullName: true, email: true } } },
+          where: req.query.resourceType ? { resource: req.query.resourceType } : {},
+          include: { user: { select: { name: true, email: true } } },
           orderBy: { createdAt: "desc" },
           skip: (page - 1) * pageSize,
           take: pageSize,
         }),
         db.auditLog.count({
-          where: req.query.resourceType ? { resourceType: req.query.resourceType } : {},
+          where: req.query.resourceType ? { resource: req.query.resourceType } : {},
         }),
       ]);
 

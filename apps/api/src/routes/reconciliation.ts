@@ -19,7 +19,7 @@ export async function reconciliationRoutes(fastify: FastifyInstance): Promise<vo
   // GET /reconciliation/runs
   fastify.get("/runs", async (req, reply) => {
     const runs = await db.reconciliationRun.findMany({
-      orderBy: { runAt: "desc" },
+      orderBy: { createdAt: "desc" },
       take: 100,
     });
     return reply.send({ data: runs });

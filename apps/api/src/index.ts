@@ -30,13 +30,17 @@ import { assuranceRoutes } from "./routes/assurance.js";
 loadEnv();
 const env = getEnv();
 
+const loggerConfig = process.env["NODE_ENV"] !== "production"
+  ? {
+      level: env.LOG_LEVEL,
+      transport: { target: "pino-pretty", options: { colorize: true } },
+    }
+  : {
+      level: env.LOG_LEVEL,
+    };
+
 const server = Fastify({
-  logger: {
-    level: env.LOG_LEVEL ?? "info",
-    transport: process.env["NODE_ENV"] !== "production"
-      ? { target: "pino-pretty", options: { colorize: true } }
-      : undefined,
-  },
+  logger: loggerConfig,
   ajv: {
     customOptions: {
       strict: "log",
@@ -45,14 +49,12 @@ const server = Fastify({
   },
 });
 
-// ── Plugins ──────────────────────────────────────────────────────────────────
-
 await server.register(helmet, {
-  contentSecurityPolicy: false, // configured at CDN layer
+  contentSecurityPolicy: false,
 });
 
 await server.register(cors, {
-  origin: env.CORS_ORIGIN?.split(",") ?? ["http://localhost:3000"],
+  origin: (process.env["CORS_ORIGIN"] ?? env.APP_URL).split(","),
   credentials: true,
 });
 
@@ -66,7 +68,7 @@ await server.register(sensible);
 
 await server.register(jwt, {
   secret: env.AUTH_SECRET,
-  sign: { expiresIn: env.JWT_EXPIRES_IN ?? "8h" },
+  sign: { expiresIn: process.env["JWT_EXPIRES_IN"] ?? "8h" },
 });
 
 await server.register(swagger, {
@@ -90,36 +92,30 @@ await server.register(swaggerUi, {
   uiConfig: { docExpansion: "list" },
 });
 
-// ── Routes ────────────────────────────────────────────────────────────────────
-
 const API_V1 = "/api/v1";
 
-await server.register(authRoutes,           { prefix: `${API_V1}/auth` });
-await server.register(entityRoutes,         { prefix: `${API_V1}/entities` });
-await server.register(bankAccountRoutes,    { prefix: `${API_V1}/bank-accounts` });
-await server.register(walletRoutes,         { prefix: `${API_V1}/wallets` });
-await server.register(mintRequestRoutes,    { prefix: `${API_V1}/mint-requests` });
+await server.register(authRoutes, { prefix: `${API_V1}/auth` });
+await server.register(entityRoutes, { prefix: `${API_V1}/entities` });
+await server.register(bankAccountRoutes, { prefix: `${API_V1}/bank-accounts` });
+await server.register(walletRoutes, { prefix: `${API_V1}/wallets` });
+await server.register(mintRequestRoutes, { prefix: `${API_V1}/mint-requests` });
 await server.register(redemptionRequestRoutes, { prefix: `${API_V1}/redemption-requests` });
-await server.register(approvalRoutes,       { prefix: `${API_V1}/approvals` });
-await server.register(transferRoutes,       { prefix: `${API_V1}/transfers` });
+await server.register(approvalRoutes, { prefix: `${API_V1}/approvals` });
+await server.register(transferRoutes, { prefix: `${API_V1}/transfers` });
 await server.register(reconciliationRoutes, { prefix: `${API_V1}/reconciliation` });
-await server.register(complianceRoutes,     { prefix: `${API_V1}/compliance` });
-await server.register(webhookRoutes,        { prefix: `${API_V1}/webhooks` });
-await server.register(reportRoutes,         { prefix: `${API_V1}/reports` });
-await server.register(adminRoutes,          { prefix: `${API_V1}/admin` });
-await server.register(eventsRoutes,         { prefix: `${API_V1}/events` });
-await server.register(treasuryAccountRoutes,{ prefix: `${API_V1}/treasury-accounts` });
-await server.register(assuranceRoutes,       { prefix: `${API_V1}/assurance` });
-
-// ── Health endpoints (public) ────────────────────────────────────────────────
+await server.register(complianceRoutes, { prefix: `${API_V1}/compliance` });
+await server.register(webhookRoutes, { prefix: `${API_V1}/webhooks` });
+await server.register(reportRoutes, { prefix: `${API_V1}/reports` });
+await server.register(adminRoutes, { prefix: `${API_V1}/admin` });
+await server.register(eventsRoutes, { prefix: `${API_V1}/events` });
+await server.register(treasuryAccountRoutes, { prefix: `${API_V1}/treasury-accounts` });
+await server.register(assuranceRoutes, { prefix: `${API_V1}/assurance` });
 
 server.get("/health", async () => ({ status: "ok", ts: new Date().toISOString() }));
-server.get("/ready",  async () => ({ status: "ready" }));
+server.get("/ready", async () => ({ status: "ready" }));
 
-// ── Start ────────────────────────────────────────────────────────────────────
-
-const port = Number(env.API_PORT ?? 4000);
-const host = env.API_HOST ?? "0.0.0.0";
+const port = Number(process.env["API_PORT"] ?? 4000);
+const host = process.env["API_HOST"] ?? "0.0.0.0";
 
 try {
   await server.listen({ port, host });

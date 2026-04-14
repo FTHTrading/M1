@@ -21,7 +21,8 @@
     "@treasury/database": "workspace:*",
     "@treasury/types": "workspace:*",
     "@treasury/config": "workspace:*",
-    "@treasury/providers": "workspace:*"
+    "@treasury/providers": "workspace:*",
+    "@treasury/ledger": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.4.5",

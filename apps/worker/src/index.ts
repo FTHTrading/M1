@@ -12,15 +12,16 @@ import { processReconciliationJob } from "./jobs/processReconciliation.js";
 loadEnv();
 const env = getEnv();
 
+const redisUrl = new URL(env.REDIS_URL);
 const connection = {
-  host: env.REDIS_HOST ?? "localhost",
-  port: Number(env.REDIS_PORT ?? 6379),
-  password: env.REDIS_PASSWORD,
+  host: redisUrl.hostname || "localhost",
+  port: redisUrl.port ? Number(redisUrl.port) : 6379,
+  ...(redisUrl.password ? { password: redisUrl.password } : {}),
 };
 
 console.log("Treasury Worker starting...");
 console.log(`Redis: ${connection.host}:${connection.port}`);
-console.log(`Sandbox mode: ${env.FEATURE_SANDBOX_ONLY ?? "true"}`);
+console.log(`Sandbox mode: ${env.FEATURE_SANDBOX_ONLY}`);
 
 // ── Mint workflow worker ──────────────────────────────────────────────────────
 
@@ -33,6 +34,7 @@ const mintWorker = new Worker(
     if (job.name === "match-wire-event") {
       return matchWireEventJob(job as Parameters<typeof matchWireEventJob>[0]);
     }
+    throw new Error(`Unsupported mint job: ${job.name}`);
   },
   {
     connection,
@@ -64,6 +66,7 @@ const redemptionWorker = new Worker(
         job as Parameters<typeof processRedemptionJob>[0],
       );
     }
+    throw new Error(`Unsupported redemption job: ${job.name}`);
   },
   {
     connection,
@@ -90,6 +93,7 @@ const reportWorker = new Worker(
     if (job.name === "generate-report") {
       return generateReportJob(job as Parameters<typeof generateReportJob>[0]);
     }
+    throw new Error(`Unsupported report job: ${job.name}`);
   },
   {
     connection,
@@ -117,6 +121,7 @@ const reconciliationWorker = new Worker(
     if (job.name === "run-reconciliation") {
       return processReconciliationJob(job as Parameters<typeof processReconciliationJob>[0]);
     }
+    throw new Error(`Unsupported reconciliation job: ${job.name}`);
   },
   {
     connection,
@@ -157,6 +162,7 @@ const auditWorker = new Worker(
     if (job.name === "run-audit") {
       return runAuditJob(job as Parameters<typeof runAuditJob>[0]);
     }
+    throw new Error(`Unsupported audit job: ${job.name}`);
   },
   {
     connection,

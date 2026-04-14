@@ -30,7 +30,7 @@ export async function reportRoutes(fastify: FastifyInstance): Promise<void> {
       db.mintRequest.count({ where: { ...where, status: "SETTLED" } }),
       db.redemptionRequest.count({ where: { ...where, status: { in: ["PENDING_APPROVAL", "SUBMITTED_TO_PROVIDER", "PROVIDER_PROCESSING"] } } }),
       db.redemptionRequest.count({ where: { ...where, status: "SETTLED" } }),
-      db.reconciliationBreak.count({ where: { status: "OPEN", reconRun: { ...where } } }),
+      db.reconciliationBreak.count({ where: { status: "OPEN", reconciliationRun: { ...where } } }),
     ]);
 
     return reply.send({

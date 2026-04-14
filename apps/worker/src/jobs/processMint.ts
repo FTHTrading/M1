@@ -10,6 +10,7 @@
 
 import type { Job } from "bullmq";
 import { getPrismaClient } from "@treasury/database";
+import { getEnv } from "@treasury/config";
 import { CircleUsdcProvider, createApostleClientFromEnv } from "@treasury/providers";
 import {
   postFiatReservedForMint,
@@ -32,21 +33,22 @@ export async function processMintJob(job: Job<{ mintRequestId: string }>): Promi
   const mintReq = await db.mintRequest.findUnique({
     where: { id: mintRequestId },
     include: {
-      entity:           true,
-      bankAccount:      true,
+      entity: true,
       settlementWallet: true,
-      counterparty:     true,
+      counterparty: true,
     },
   });
 
   if (!mintReq) throw new Error(`MintRequest ${mintRequestId} not found`);
 
-  const sandboxMode = process.env["FEATURE_SANDBOX_ONLY"] !== "false";
+  const env = getEnv();
   const provider = new CircleUsdcProvider({
-    apiKey:    process.env["CIRCLE_API_KEY"] ?? "",
-    entityId:  process.env["CIRCLE_ENTITY_ID"] ?? "",
-    walletId:  process.env["CIRCLE_WALLET_ID"] ?? "",
-    sandbox:   sandboxMode,
+    CIRCLE_API_KEY: env.CIRCLE_API_KEY,
+    ...(env.CIRCLE_ENTITY_ID ? { CIRCLE_ENTITY_ID: env.CIRCLE_ENTITY_ID } : {}),
+    ...(env.CIRCLE_WALLET_ID ? { CIRCLE_WALLET_ID: env.CIRCLE_WALLET_ID } : {}),
+    CIRCLE_SANDBOX: env.CIRCLE_SANDBOX,
+    CIRCLE_BASE_URL: env.CIRCLE_BASE_URL,
+    FEATURE_SANDBOX_ONLY: env.FEATURE_SANDBOX_ONLY,
   });
 
   // ── Step 1: BANK_FUNDED → reserve fiat in ledger ────────────────────────
@@ -72,28 +74,33 @@ export async function processMintJob(job: Job<{ mintRequestId: string }>): Promi
   const freshReq = await db.mintRequest.findUniqueOrThrow({ where: { id: mintRequestId } });
 
   if (freshReq.status === "SUBMITTED_TO_PROVIDER") {
+    const destinationNetwork = freshReq.network ?? "ETHEREUM";
+    const destinationWalletAddress = mintReq.settlementWallet?.address ?? "";
+
     const quoteResult = await provider.quoteMint({
-      amountCents: freshReq.requestedAmountCents,
-      asset:       freshReq.asset as "USDC",
-      network:     freshReq.network as never,
+      fiatAmountCents: freshReq.requestedAmountCents,
+      asset: freshReq.asset as "USDC",
+      destinationNetwork,
     });
 
     const initiationResult = await provider.initiateMint({
-      mintRequestId,
-      amountCents:         freshReq.requestedAmountCents,
-      asset:               freshReq.asset as "USDC",
-      network:             freshReq.network as never,
-      destinationAddress:  freshReq.settlementWallet?.address ?? "",
-      idempotencyKey:      mintRequestId,
+      requestId: mintRequestId,
+      fiatAmountCents: freshReq.requestedAmountCents,
+      asset: freshReq.asset as "USDC",
+      destinationWalletAddress,
+      destinationNetwork,
+      entityId: freshReq.entityId,
+      ...(freshReq.bankFundingReference ? { externalReference: freshReq.bankFundingReference } : {}),
     });
 
     await db.mintRequest.update({
       where: { id: mintRequestId },
       data: {
-        status:            "PROVIDER_PROCESSING",
-        providerRequestId: initiationResult.providerPaymentId,
-        providerResponse:  initiationResult.wireInstructions as never,
-        networkFeeCents:   quoteResult.estimatedFeeCents,
+        status: "PROVIDER_PROCESSING",
+        providerRequestId: initiationResult.externalId,
+        providerResponse: initiationResult.wireInstructions as never,
+        networkFeeCents: quoteResult.networkFeeEstimateCents,
+        providerSubmittedAt: new Date(),
       },
     });
 
@@ -107,7 +114,7 @@ export async function processMintJob(job: Job<{ mintRequestId: string }>): Promi
       eventType:     "mint.provider_processing",
       aggregateType: "MintRequest",
       aggregateId:   mintRequestId,
-      payload:       { providerPaymentId: initiationResult.providerPaymentId },
+      payload: { providerRequestId: initiationResult.externalId },
     });
 
     // Re-queue a status-check job to come back in 30 s
@@ -116,13 +123,11 @@ export async function processMintJob(job: Job<{ mintRequestId: string }>): Promi
 
   // ── Step 3: PROVIDER_PROCESSING → poll until MINTED ─────────────────────
   if (freshReq.status === "PROVIDER_PROCESSING" && freshReq.providerRequestId) {
-    const statusResult = await provider.checkMintStatus({
-      providerPaymentId: freshReq.providerRequestId,
-    });
+    const statusResult = await provider.checkMintStatus(freshReq.providerRequestId);
 
     if (statusResult.status === "SETTLED" || statusResult.status === "MINTED") {
       const feeCents = freshReq.networkFeeCents ?? 0n;
-      const mintedUnits = statusResult.stablecoinUnits ?? freshReq.requestedAmountCents * 10_000n;
+      const mintedUnits = statusResult.assetAmount ?? freshReq.requestedAmountCents * 10_000n;
 
       await postMintCompleted({
         entityId:        mintReq.entityId,
@@ -146,13 +151,13 @@ export async function processMintJob(job: Job<{ mintRequestId: string }>): Promi
     } else if (statusResult.status === "FAILED" || statusResult.status === "CANCELLED") {
       await db.mintRequest.update({
         where: { id: mintRequestId },
-        data: { status: "FAILED", failureReason: statusResult.failureReason },
+        data: { status: "FAILED", failureReason: statusResult.message ?? null },
       });
       await eventStore.emit({
-        eventType:     "mint.failed",
+        eventType: "mint.failed",
         aggregateType: "MintRequest",
-        aggregateId:   mintRequestId,
-        payload:       { reason: statusResult.failureReason },
+        aggregateId: mintRequestId,
+        payload: { reason: statusResult.message ?? null },
       });
       return;
     } else {

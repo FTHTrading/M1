@@ -30,7 +30,7 @@ export async function complianceRoutes(fastify: FastifyInstance): Promise<void> 
 
   // POST /compliance/evaluate — dry-run policy check
   const evalSchema = z.object({
-    entityId:  z.string().uuid(),
+    entityId:  z.string().min(1),
     amountUsd: z.number().positive(),
     asset:     z.enum(["USDC","USDT"]),
     network:   z.enum(["ETHEREUM","POLYGON","BASE","SOLANA","TRON","STELLAR","XRPL"]),
@@ -42,7 +42,11 @@ export async function complianceRoutes(fastify: FastifyInstance): Promise<void> 
     if (!body.success) {
       return reply.code(400).send({ error: "Validation", message: body.error.flatten() });
     }
-    const ctx: PolicyContext = body.data;
+    const ctx: PolicyContext = {
+      entityId: body.data.entityId,
+      amountCents: BigInt(Math.round(body.data.amountUsd * 100)),
+      asset: body.data.asset,
+    };
     const result = await evaluatePolicy(ctx);
     return reply.send(result);
   });
@@ -51,10 +55,10 @@ export async function complianceRoutes(fastify: FastifyInstance): Promise<void> 
   fastify.get<{ Querystring: { entityId?: string; status?: string } }>("/cases", async (req, reply) => {
     const cases = await db.complianceCase.findMany({
       where: {
-        ...(req.query.entityId ? { entityId: req.query.entityId } : {}),
+        ...(req.query.entityId ? { complianceProfile: { entityId: req.query.entityId } } : {}),
         ...(req.query.status ? { status: req.query.status as never } : {}),
       },
-      include: { entity: { select: { legalName: true } } },
+      include: { complianceProfile: { include: { entity: { select: { legalName: true } } } } },
       orderBy: { createdAt: "desc" },
     });
     return reply.send(cases);

@@ -101,21 +101,21 @@ export async function mintRequestRoutes(fastify: FastifyInstance): Promise<void>
     });
     if (!wallet) return reply.code(400).send({ error: "Settlement wallet not found" });
 
-    const amountUsd = body.data.requestedAmountCents / 100;
     const policyCtx: PolicyContext = {
-      entityId:           body.data.entityId,
-      amountUsd,
-      asset:              body.data.asset,
-      network:            body.data.network,
-      destinationAddress: wallet.address,
-      liveMode:           process.env["FEATURE_SANDBOX_ONLY"] !== "true",
+      entityId: body.data.entityId,
+      amountCents: BigInt(body.data.requestedAmountCents),
+      asset: body.data.asset,
+      destinationWallet: {
+        network: body.data.network,
+        address: wallet.address,
+      },
     };
 
     const policy = await evaluatePolicy(policyCtx);
     if (!policy.allowed) {
       return reply.code(422).send({
         error: "PolicyViolation",
-        reasons: policy.reasons,
+        reasons: policy.blockedReasons,
       });
     }
 
@@ -124,15 +124,15 @@ export async function mintRequestRoutes(fastify: FastifyInstance): Promise<void>
       data: {
         entityId:             body.data.entityId,
         treasuryAccountId:    body.data.treasuryAccountId,
-        initiatedById:        (req as any).user.id,
+        initiatedById:        (req.user as { sub: string }).sub,
         settlementWalletId:   body.data.settlementWalletId,
         asset:                body.data.asset,
         network:              body.data.network,
         requestedAmountCents: BigInt(body.data.requestedAmountCents),
-        memo:                 body.data.memo,
         reference,
         status:               "DRAFT",
-        requiresApproval:     policy.requiresApproval,
+        requiresApproval:     policy.requiresDualApproval,
+        ...(body.data.memo ? { memo: body.data.memo } : {}),
       },
     });
 
@@ -189,8 +189,8 @@ export async function mintRequestRoutes(fastify: FastifyInstance): Promise<void>
       const walletAddress = mintReq.settlementWallet?.address;
       if (walletAddress) {
         const screening = await screenOnChainAddress({
-          address:     walletAddress,
-          network:     mintReq.network,
+          address: walletAddress,
+          network: mintReq.network ?? "ETHEREUM",
           sandboxMode,
         });
         if (!screening.cleared) {
@@ -204,15 +204,16 @@ export async function mintRequestRoutes(fastify: FastifyInstance): Promise<void>
 
       // ── FTH L1 TEV pre-flight ───────────────────────────────────────────
       if (fthL1Client) {
+        const wireReferenceNumber = (req.body as { wireReferenceNumber?: string }).wireReferenceNumber;
         const tevResult = await fthL1Client.verify({
-          requestId:         req.params.id,
-          entityId:          mintReq.entityId,
-          operationType:     "MINT",
-          walletAddress:     walletAddress ?? "",
-          network:           mintReq.network,
-          asset:             mintReq.asset as "USDC" | "USDT",
-          amountCents:       mintReq.requestedAmountCents.toString(),
-          externalReference: (req.body as { wireReferenceNumber?: string }).wireReferenceNumber,
+          requestId: req.params.id,
+          entityId: mintReq.entityId,
+          operationType: "MINT",
+          walletAddress: walletAddress ?? "",
+          network: mintReq.network ?? "ETHEREUM",
+          asset: mintReq.asset as "USDC" | "USDT",
+          amountCents: mintReq.requestedAmountCents.toString(),
+          ...(wireReferenceNumber ? { externalReference: wireReferenceNumber } : {}),
         });
 
         await db.mintRequest.update({
@@ -220,7 +221,6 @@ export async function mintRequestRoutes(fastify: FastifyInstance): Promise<void>
           data: {
             fthTevVerdict:   tevResult.verdict,
             fthTevScore:     tevResult.score ?? null,
-            fthTevRiskTags:  tevResult.riskTags ?? [],
             fthTevReference: tevResult.receiptId ?? null,
             fthTevCheckedAt: new Date(),
           } as never,
@@ -250,11 +250,12 @@ export async function mintRequestRoutes(fastify: FastifyInstance): Promise<void>
         }
       }
 
+      const wireReferenceNumber = (req.body as { wireReferenceNumber?: string }).wireReferenceNumber;
       const updated = await db.mintRequest.update({
         where: { id: req.params.id },
         data: {
           status: "BANK_FUNDED",
-          bankFundingReference: (req.body as { wireReferenceNumber?: string }).wireReferenceNumber,
+          ...(wireReferenceNumber ? { bankFundingReference: wireReferenceNumber } : {}),
         },
       });
 

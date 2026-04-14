@@ -15,6 +15,10 @@ const envSchema = z.object({
   APP_URL: z.string().url().default("http://localhost:3000"),
   API_URL: z.string().url().default("http://localhost:3001"),
   LOG_LEVEL: z.enum(["trace", "debug", "info", "warn", "error"]).default("info"),
+  API_HOST: z.string().default("0.0.0.0"),
+  API_PORT: numString.default("4000"),
+  CORS_ORIGIN: z.string().default("http://localhost:3000"),
+  JWT_EXPIRES_IN: z.string().default("8h"),
 
   // Database
   DATABASE_URL: z.string().min(1),
@@ -67,8 +71,8 @@ const envSchema = z.object({
   ENABLE_TRON: boolEnv.default("false"),
 
   // Policy limits — stored as integer USD cents strings
-  REQUIRED_APPROVAL_THRESHOLD_USD: numString.default("50000" as unknown as number),
-  MAX_SINGLE_TX_USD: numString.default("10000000" as unknown as number),
+  REQUIRED_APPROVAL_THRESHOLD_USD: numString.default("50000"),
+  MAX_SINGLE_TX_USD: numString.default("10000000"),
 });
 
 export type Env = z.infer<typeof envSchema>;

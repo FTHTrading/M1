@@ -44,7 +44,7 @@ export async function bankAccountRoutes(fastify: FastifyInstance): Promise<void>
   fastify.delete<{ Params: { id: string } }>("/:id", async (req, reply) => {
     await db.bankAccount.update({
       where: { id: req.params.id },
-      data: { isActive: false },
+      data: { status: "INACTIVE" },
     });
     return reply.code(204).send();
   });

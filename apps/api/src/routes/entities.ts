@@ -4,15 +4,17 @@ import { z } from "zod";
 
 const createSchema = z.object({
   legalName:     z.string().min(2),
-  dbaName:       z.string().optional(),
-  entityType:    z.enum(["LLC", "CORP", "PARTNERSHIP", "SOLE_PROP", "TRUST"]),
+  tradingName:   z.string().optional(),
+  entityType:    z.enum(["CORPORATION", "LLC", "PARTNERSHIP", "TRUST", "GOVERNMENT", "FINANCIAL_INSTITUTION", "OTHER"]),
   taxId:         z.string().optional(),
-  countryCode:   z.string().length(2),
+  countryOfIncorporation: z.string().min(2),
   stateProvince: z.string().optional(),
   addressLine1:  z.string(),
   addressLine2:  z.string().optional(),
   city:          z.string(),
   postalCode:    z.string(),
+  contactEmail:  z.string().email().default("ops@example.com"),
+  contactPhone:  z.string().optional(),
 });
 
 export async function entityRoutes(fastify: FastifyInstance): Promise<void> {
@@ -54,15 +56,20 @@ export async function entityRoutes(fastify: FastifyInstance): Promise<void> {
     const entity = await db.entity.create({
       data: {
         legalName:     body.data.legalName,
-        dbaName:       body.data.dbaName,
+        ...(body.data.tradingName ? { tradingName: body.data.tradingName } : {}),
         entityType:    body.data.entityType,
-        taxId:         body.data.taxId,
-        countryCode:   body.data.countryCode,
-        stateProvince: body.data.stateProvince,
-        addressLine1:  body.data.addressLine1,
-        addressLine2:  body.data.addressLine2,
-        city:          body.data.city,
-        postalCode:    body.data.postalCode,
+        ...(body.data.taxId ? { taxId: body.data.taxId } : {}),
+        countryOfIncorporation: body.data.countryOfIncorporation,
+        address: {
+          line1: body.data.addressLine1,
+          ...(body.data.addressLine2 ? { line2: body.data.addressLine2 } : {}),
+          city: body.data.city,
+          ...(body.data.stateProvince ? { stateProvince: body.data.stateProvince } : {}),
+          postalCode: body.data.postalCode,
+          country: body.data.countryOfIncorporation,
+        },
+        contactEmail: body.data.contactEmail,
+        ...(body.data.contactPhone ? { contactPhone: body.data.contactPhone } : {}),
       },
     });
 

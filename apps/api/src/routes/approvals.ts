@@ -24,9 +24,9 @@ export async function approvalRoutes(fastify: FastifyInstance): Promise<void> {
     const pending = await db.approval.findMany({
       where: { status: "PENDING" },
       include: {
-        mintRequest:       { select: { reference: true, amountCents: true, asset: true, status: true } },
-        redemptionRequest: { select: { reference: true, amountCents: true, asset: true, status: true } },
-        approver:          { select: { fullName: true, email: true } },
+        mintRequest:       { select: { reference: true, requestedAmountCents: true, asset: true, status: true } },
+        redemptionRequest: { select: { reference: true, expectedFiatCents: true, asset: true, status: true } },
+        approver:          { select: { name: true, email: true } },
       },
       orderBy: { createdAt: "asc" },
     });
@@ -56,9 +56,10 @@ export async function approvalRoutes(fastify: FastifyInstance): Promise<void> {
       where: { id: req.params.id },
       data: {
         status:        body.data.decision === "APPROVE" ? "APPROVED" : "REJECTED",
-        note:          body.data.note,
-        approverUserId,
-        decidedAt:     new Date(),
+        ...(body.data.note ? { comment: body.data.note } : {}),
+        approverId: approverUserId,
+        decision: body.data.decision,
+        decisionAt:     new Date(),
       },
     });
 

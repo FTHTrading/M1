@@ -88,37 +88,34 @@ export async function redemptionRequestRoutes(fastify: FastifyInstance): Promise
 
     // 1 USDC = 1_000_000 units (6 decimals), ≈ $1.00 → 100 cents
     const requestedUnits = BigInt(body.data.requestedUnits);
-    const amountUsd = Number(requestedUnits) / 1_000_000;
-
     const policyCtx: PolicyContext = {
       entityId: body.data.entityId,
-      amountUsd,
+      amountCents: BigInt(Math.round((Number(requestedUnits) / 1_000_000) * 100)),
       asset: body.data.asset,
-      network: body.data.network,
-      liveMode: process.env["FEATURE_SANDBOX_ONLY"] !== "true",
     };
 
     const policy = await evaluatePolicy(policyCtx);
     if (!policy.allowed) {
-      return reply.code(422).send({ error: "PolicyViolation", reasons: policy.reasons });
+      return reply.code(422).send({ error: "PolicyViolation", reasons: policy.blockedReasons });
     }
 
     const reference = `REDEEM-${Date.now()}`;
+    const amountUsd = Number(requestedUnits) / 1_000_000;
     const redReq = await db.redemptionRequest.create({
       data: {
         entityId:          body.data.entityId,
         treasuryAccountId: body.data.treasuryAccountId,
-        initiatedById:     (req as any).user.id,
+        initiatedById:     (req.user as { sub: string }).sub,
         sourceWalletId:    body.data.sourceWalletId,
         bankAccountId:     body.data.bankAccountId,
         asset:             body.data.asset,
         network:           body.data.network,
         requestedUnits,
         expectedFiatCents: BigInt(Math.round(amountUsd * 100)),
-        memo:              body.data.memo,
         reference,
         status:            "DRAFT",
-        requiresApproval:  policy.requiresApproval,
+        requiresApproval:  policy.requiresDualApproval,
+        ...(body.data.memo ? { memo: body.data.memo } : {}),
       },
     });
 
@@ -141,8 +138,8 @@ export async function redemptionRequestRoutes(fastify: FastifyInstance): Promise
     const walletAddress = redReq.sourceWallet?.address;
     if (walletAddress) {
       const screening = await screenOnChainAddress({
-        address:     walletAddress,
-        network:     redReq.network,
+        address: walletAddress,
+        network: redReq.network ?? "ETHEREUM",
         sandboxMode,
       });
       if (!screening.cleared) {
@@ -162,7 +159,7 @@ export async function redemptionRequestRoutes(fastify: FastifyInstance): Promise
         entityId:      redReq.entityId,
         operationType: "REDEMPTION",
         walletAddress: walletAddress ?? "",
-        network:       redReq.network,
+        network:       redReq.network ?? "ETHEREUM",
         asset:         redReq.asset as "USDC" | "USDT",
         amountCents:   String(Math.round(amountUsd * 100)),
       });
@@ -172,7 +169,6 @@ export async function redemptionRequestRoutes(fastify: FastifyInstance): Promise
         data: {
           fthTevVerdict:   tevResult.verdict,
           fthTevScore:     tevResult.score ?? null,
-          fthTevRiskTags:  tevResult.riskTags ?? [],
           fthTevReference: tevResult.receiptId ?? null,
           fthTevCheckedAt: new Date(),
         } as never,

@@ -108,6 +108,7 @@ export const mintApi = {
   create: (body: {
     entityId: string;
     treasuryAccountId: string;
+    bankAccountId: string;
     settlementWalletId: string;
     asset: string;
     network: string;
@@ -277,7 +278,14 @@ export interface AuditLog {
 export const auditApi = {
   list: (params?: { page?: number; entityType?: string }) =>
     api.get<{ data: AuditLog[]; total: number }>(
-      `/admin/audit-log?${new URLSearchParams(params as Record<string, string>)}`
+      `/admin/audit-log?${new URLSearchParams(
+        Object.entries(params ?? {}).reduce<Record<string, string>>((acc, [key, value]) => {
+          if (value !== undefined) {
+            acc[key] = String(value);
+          }
+          return acc;
+        }, {}),
+      )}`
     ),
 };
 

@@ -118,15 +118,20 @@ export class CircleUsdcProvider implements StablecoinProvider {
     body?: unknown,
   ): Promise<T> {
     const url = `${this.baseUrl}${path}`;
-    const res = await fetch(url, {
+    const init: RequestInit = {
       method,
       headers: {
         Authorization: `Bearer ${this.apiKey}`,
         "Content-Type": "application/json",
         Accept: "application/json",
       },
-      body: body !== undefined ? JSON.stringify(body) : undefined,
-    });
+    };
+
+    if (body !== undefined) {
+      init.body = JSON.stringify(body);
+    }
+
+    const res = await fetch(url, init);
 
     if (!res.ok) {
       const text = await res.text().catch(() => "(no body)");
@@ -196,17 +201,21 @@ export class CircleUsdcProvider implements StablecoinProvider {
     const intent = CirclePaymentIntentSchema.parse(response.data);
     const wireMethod = intent.paymentMethods?.find((m) => m.type === "wire");
 
-    const wireInstructions: WireInstructions | undefined = wireMethod?.beneficiaryBank
+    const wireInstructions = wireMethod?.beneficiaryBank
       ? {
           bankName: wireMethod.beneficiaryBank.name ?? "Circle Insured Financial",
           accountNumber: wireMethod.beneficiaryBank.accountNumber ?? "",
           routingNumber: wireMethod.beneficiaryBank.routingNumber ?? "",
-          swift: wireMethod.beneficiaryBank.swiftCode,
           reference: wireMethod.trackingRef ?? intent.id,
           beneficiaryName: "Circle Internet Financial",
-          beneficiaryAddress: wireMethod.beneficiaryBank.address,
           amountCents: params.fiatAmountCents,
           currency: "USD",
+          ...(wireMethod.beneficiaryBank.swiftCode
+            ? { swift: wireMethod.beneficiaryBank.swiftCode }
+            : {}),
+          ...(wireMethod.beneficiaryBank.address
+            ? { beneficiaryAddress: wireMethod.beneficiaryBank.address }
+            : {}),
         }
       : undefined;
 
@@ -219,7 +228,7 @@ export class CircleUsdcProvider implements StablecoinProvider {
         updatedAt: new Date(intent.updateDate),
         providerRaw: intent,
       },
-      wireInstructions,
+      ...(wireInstructions ? { wireInstructions } : {}),
     };
   }
 
@@ -303,11 +312,11 @@ export class CircleUsdcProvider implements StablecoinProvider {
     return {
       externalId,
       status: domainStatus,
-      fiatAmountCents: transfer.amount
-        ? BigInt(Math.round(parseFloat(transfer.amount.amount) * 100))
-        : undefined,
       updatedAt: new Date(transfer.updateDate),
       providerRaw: transfer,
+      ...(transfer.amount
+        ? { fiatAmountCents: BigInt(Math.round(parseFloat(transfer.amount.amount) * 100)) }
+        : {}),
     };
   }
 
@@ -358,10 +367,10 @@ export class CircleUsdcProvider implements StablecoinProvider {
       network: t.source?.chain
         ? (CIRCLE_CHAIN_TO_NETWORK[t.source.chain] ?? "ETHEREUM")
         : "ETHEREUM",
-      txHash: t.transactionHash,
       createdAt: new Date(t.createDate),
       updatedAt: new Date(t.updateDate),
       raw: t,
+      ...(t.transactionHash ? { txHash: t.transactionHash } : {}),
     }));
   }
 

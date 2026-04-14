@@ -9,6 +9,7 @@
 
 import type { FastifyInstance } from "fastify";
 import { createHmac, timingSafeEqual } from "crypto";
+import type { Prisma } from "@prisma/client";
 import { getPrismaClient } from "@treasury/database";
 import { Queue } from "bullmq";
 
@@ -43,6 +44,10 @@ function getRawPayload(request: { rawBody?: string; body: unknown }): string {
   return JSON.stringify(request.body ?? {});
 }
 
+function toJsonValue(value: unknown): Prisma.InputJsonValue {
+  return value as Prisma.InputJsonValue;
+}
+
 export async function webhookRoutes(fastify: FastifyInstance): Promise<void> {
   const db = getPrismaClient();
   const mintQueue = new Queue("mint-workflow", {
@@ -55,9 +60,7 @@ export async function webhookRoutes(fastify: FastifyInstance): Promise<void> {
   // POST /webhooks/circle — Circle Mint API callbacks
   fastify.post<{ Body: Record<string, unknown> }>(
     "/circle",
-    {
-      config: { rawBody: true }, // requires rawBody plugin or body parser config
-    },
+    {},
     async (request, reply) => {
       const signature = String(request.headers["x-circle-signature"] ?? "");
       const timestampHeader = request.headers["x-circle-timestamp"];
@@ -93,8 +96,8 @@ export async function webhookRoutes(fastify: FastifyInstance): Promise<void> {
             source: "circle",
             eventType,
             externalEventId: clientRef || null,
-            rawPayload: event as Record<string, unknown>,
-            headers: request.headers as Record<string, unknown>,
+            rawPayload: toJsonValue(event),
+            headers: toJsonValue(request.headers),
             status: "PENDING",
           },
         });

@@ -1,6 +1,7 @@
 import { getPrismaClient } from "@treasury/database";
 import type { KnownEventType, DomainEvent } from "@treasury/types";
 import { randomUUID } from "crypto";
+import type { Prisma } from "@prisma/client";
 
 type EventListenerFn<T = unknown> = (event: DomainEvent<T>) => void | Promise<void>;
 
@@ -27,6 +28,8 @@ export class EventStore {
     const db = getPrismaClient();
     const id = randomUUID();
     const occurredAt = new Date();
+    const payload = params.payload as Prisma.InputJsonValue;
+    const metadata = (params.metadata ?? {}) as Prisma.InputJsonValue;
 
     await db.eventLog.create({
       data: {
@@ -34,10 +37,10 @@ export class EventStore {
         eventType: params.eventType,
         aggregateId: params.aggregateId,
         aggregateType: params.aggregateType,
-        actorId: params.actorId,
-        actorType: params.actorType,
-        payload: params.payload as Record<string, unknown>,
-        metadata: params.metadata ?? {},
+        actorId: params.actorId ?? null,
+        actorType: params.actorType ?? null,
+        payload,
+        metadata,
         occurredAt,
       },
     });
@@ -47,11 +50,11 @@ export class EventStore {
       eventType: params.eventType,
       aggregateId: params.aggregateId,
       aggregateType: params.aggregateType,
-      actorId: params.actorId,
-      actorType: params.actorType,
       payload: params.payload,
-      metadata: params.metadata,
       occurredAt,
+      ...(params.actorId ? { actorId: params.actorId } : {}),
+      ...(params.actorType ? { actorType: params.actorType } : {}),
+      ...(params.metadata ? { metadata: params.metadata } : {}),
     };
 
     // Notify wildcard and specific listeners (fire-and-forget, non-blocking)

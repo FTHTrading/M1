@@ -25,7 +25,7 @@ export async function walletRoutes(fastify: FastifyInstance): Promise<void> {
   fastify.get<{ Querystring: { entityId?: string } }>("/", async (req, reply) => {
     const wallets = await db.wallet.findMany({
       where: req.query.entityId ? { entityId: req.query.entityId } : {},
-      include: { whitelistEntries: { where: { isActive: true } } },
+      include: { whitelistEntries: true },
       orderBy: { createdAt: "desc" },
     });
     return reply.send({ data: wallets });
@@ -47,7 +47,11 @@ export async function walletRoutes(fastify: FastifyInstance): Promise<void> {
       return reply.code(400).send({ error: "Validation", message: body.error.flatten() });
     }
     const entry = await db.walletWhitelistEntry.create({
-      data: { walletId: req.params.id, ...body.data },
+      data: {
+        walletId: req.params.id,
+        approvedById: (req.user as { sub: string }).sub,
+        reason: body.data.label ?? `Approved ${body.data.network} wallet ${body.data.address}`,
+      },
     });
     return reply.code(201).send(entry);
   });
@@ -56,9 +60,8 @@ export async function walletRoutes(fastify: FastifyInstance): Promise<void> {
   fastify.delete<{ Params: { id: string; entryId: string } }>(
     "/:id/whitelist/:entryId",
     async (req, reply) => {
-      await db.walletWhitelistEntry.update({
+      await db.walletWhitelistEntry.delete({
         where: { id: req.params.entryId },
-        data: { isActive: false },
       });
       return reply.code(204).send();
     },

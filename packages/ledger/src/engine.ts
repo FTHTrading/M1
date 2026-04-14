@@ -79,14 +79,14 @@ export async function postJournalEntry(
 
   const entry = await db.journalEntry.create({
     data: {
-      entityId: input.entityId,
-      mintRequestId: input.mintRequestId,
-      redemptionRequestId: input.redemptionRequestId,
       status: "POSTED",
       memo: input.memo,
       referenceType: input.referenceType,
-      referenceId: input.referenceId,
       postedAt: new Date(),
+      ...(input.entityId ? { entityId: input.entityId } : {}),
+      ...(input.mintRequestId ? { mintRequestId: input.mintRequestId } : {}),
+      ...(input.redemptionRequestId ? { redemptionRequestId: input.redemptionRequestId } : {}),
+      ...(input.referenceId ? { referenceId: input.referenceId } : {}),
       lines: {
         createMany: {
           data: input.lines.map((line) => ({
@@ -94,7 +94,7 @@ export async function postJournalEntry(
             isDebit: line.isDebit,
             amountCents: line.amountCents,
             currency: line.currency ?? "USD",
-            description: line.description,
+            description: line.description ?? null,
           })),
         },
       },
@@ -109,15 +109,28 @@ export async function getAccountBalance(accountCode: string): Promise<bigint> {
   const db = getPrismaClient();
   const account = await db.ledgerAccount.findUnique({
     where: { code: accountCode },
-    include: {
-      debitLines: { where: { isDebit: true } },
-      creditLines: { where: { isDebit: false } },
-    },
   });
   if (!account) throw new Error(`Account not found: ${accountCode}`);
 
-  const debits = account.debitLines.reduce((sum, l) => sum + l.amountCents, 0n);
-  const credits = account.creditLines.reduce((sum, l) => sum + l.amountCents, 0n);
+  const [debitAggregate, creditAggregate] = await Promise.all([
+    db.journalLine.aggregate({
+      where: {
+        ledgerAccountId: account.id,
+        isDebit: true,
+      },
+      _sum: { amountCents: true },
+    }),
+    db.journalLine.aggregate({
+      where: {
+        ledgerAccountId: account.id,
+        isDebit: false,
+      },
+      _sum: { amountCents: true },
+    }),
+  ]);
+
+  const debits = debitAggregate._sum.amountCents ?? 0n;
+  const credits = creditAggregate._sum.amountCents ?? 0n;
 
   // For ASSET/EXPENSE accounts normal balance is debit; for LIABILITY/EQUITY/REVENUE it's credit
   const isDebitNormal = ["ASSET", "EXPENSE"].includes(account.type);

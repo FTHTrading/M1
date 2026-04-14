@@ -40,7 +40,7 @@ export interface GenerateReportJobData {
 
 export async function generateReportJob(
   job: Job<GenerateReportJobData>,
-): Promise<{ reportJobId: string; downloadKey: string; rowCount: number }> {
+): Promise<{ reportJobId: string; storageKey: string; rowCount: number }> {
   const db = getPrismaClient();
   const { reportType, format, periodStart, periodEnd, entityId, requestedBy, reportJobId } =
     job.data;
@@ -98,17 +98,16 @@ export async function generateReportJob(
 
     // ── Persist / store ────────────────────────────────────────────────────
 
-    const downloadKey = buildStorageKey(currentReportJobId, reportType, format);
-    const storage = await storeReport(downloadKey, rendered);
+    const storageKey = buildStorageKey(currentReportJobId, reportType, format);
+    const storage = await storeReport(storageKey, rendered);
 
     await db.reportJob.update({
       where: { id: currentReportJobId },
       data:  {
-        status:       "COMPLETED",
-        completedAt:  new Date(),
-        downloadKey,
-        storageKey:   downloadKey,
-        downloadUrl:  storage.downloadUrl,
+        status: "COMPLETED",
+        completedAt: new Date(),
+        storageKey,
+        downloadUrl: storage.downloadUrl,
         parameters: {
           reportType,
           format,
@@ -127,12 +126,12 @@ export async function generateReportJob(
       aggregateId:   currentReportJobId,
       actorId:       requestedBy,
       actorType:     "user",
-      payload:       { reportType, format, rowCount: rows.length, downloadKey },
+      payload: { reportType, format, rowCount: rows.length, storageKey },
     });
 
-    await log(`[report] completed ${currentReportJobId} - ${rows.length} rows, key: ${downloadKey}`);
+    await log(`[report] completed ${currentReportJobId} - ${rows.length} rows, key: ${storageKey}`);
 
-    return { reportJobId: currentReportJobId, downloadKey, rowCount: rows.length };
+    return { reportJobId: currentReportJobId, storageKey, rowCount: rows.length };
 
   } catch (err: unknown) {
     const reason = err instanceof Error ? err.message : String(err);
@@ -214,44 +213,53 @@ async function fetchReportData(
         orderBy: { createdAt: "asc" },
       });
       return items.map((r) => ({
-        id:                r.id,
-        reference:         r.reference,
-        entity:            r.entity?.legalName ?? r.entityId,
-        asset:             r.asset,
-        network:           r.network,
-        requestedUnits:    r.requestedUnits.toString(),
-        expectedFiatCents: r.expectedFiatCents.toString(),
-        actualFiatCents:   r.actualFiatCents?.toString() ?? "",
-        status:            r.status,
-        createdAt:         r.createdAt.toISOString(),
-        completedAt:       r.completedAt?.toISOString() ?? "",
+        id: r.id,
+        reference: r.reference,
+        entity: r.entity?.legalName ?? r.entityId,
+        asset: r.asset,
+        network: r.network,
+        requestedUnits: r.requestedUnits.toString(),
+        expectedFiatCents: (r.expectedFiatCents ?? 0n).toString(),
+        receivedFiatCents: r.receivedFiatCents?.toString() ?? "",
+        status: r.status,
+        createdAt: r.createdAt.toISOString(),
+        redemptionCompletedAt: r.redemptionCompletedAt?.toISOString() ?? "",
+        settledAt: r.settledAt?.toISOString() ?? "",
       }));
     }
 
     case "entity_balances": {
       const accounts = await db.ledgerAccount.findMany({
-        where: entityId ? { entityId } : {},
         include: {
-          lines: {
+          journalLines: {
             where: {
-              journalEntry: { postedAt: { gte: start, lte: end } },
+              journalEntry: {
+                postedAt: { gte: start, lte: end },
+                ...(entityId ? { entityId } : {}),
+              },
             },
-            select: { debitCents: true, creditCents: true },
+            select: { amountCents: true, isDebit: true },
           },
         },
       });
       return accounts.map((a) => {
-        const debits  = a.lines.reduce((s, l) => s + l.debitCents,  0n);
-        const credits = a.lines.reduce((s, l) => s + l.creditCents, 0n);
+        const debits = a.journalLines.reduce(
+          (sum, line) => (line.isDebit ? sum + line.amountCents : sum),
+          0n,
+        );
+        const credits = a.journalLines.reduce(
+          (sum, line) => (!line.isDebit ? sum + line.amountCents : sum),
+          0n,
+        );
         return {
-          id:          a.id,
-          code:        a.code,
-          name:        a.name,
-          type:        a.type,
-          currency:    a.currency,
-          debitCents:  debits.toString(),
+          id: a.id,
+          code: a.code,
+          name: a.name,
+          type: a.type,
+          currency: a.currency,
+          debitCents: debits.toString(),
           creditCents: credits.toString(),
-          netCents:    (credits - debits).toString(),
+          netCents: (credits - debits).toString(),
         };
       });
     }

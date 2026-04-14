@@ -10,6 +10,7 @@
 
 import type { Job } from "bullmq";
 import { getPrismaClient } from "@treasury/database";
+import { getEnv } from "@treasury/config";
 import { CircleUsdcProvider } from "@treasury/providers";
 import {
   postRedemptionSubmitted,
@@ -37,31 +38,40 @@ export async function processRedemptionJob(
 
   if (!redReq) throw new Error(`RedemptionRequest ${redemptionRequestId} not found`);
 
-  const sandboxMode = process.env["FEATURE_SANDBOX_ONLY"] !== "false";
+  const env = getEnv();
   const provider = new CircleUsdcProvider({
-    apiKey:   process.env["CIRCLE_API_KEY"] ?? "",
-    entityId: process.env["CIRCLE_ENTITY_ID"] ?? "",
-    walletId: process.env["CIRCLE_WALLET_ID"] ?? "",
-    sandbox:  sandboxMode,
+    CIRCLE_API_KEY: env.CIRCLE_API_KEY,
+    ...(env.CIRCLE_ENTITY_ID ? { CIRCLE_ENTITY_ID: env.CIRCLE_ENTITY_ID } : {}),
+    ...(env.CIRCLE_WALLET_ID ? { CIRCLE_WALLET_ID: env.CIRCLE_WALLET_ID } : {}),
+    CIRCLE_SANDBOX: env.CIRCLE_SANDBOX,
+    CIRCLE_BASE_URL: env.CIRCLE_BASE_URL,
+    FEATURE_SANDBOX_ONLY: env.FEATURE_SANDBOX_ONLY,
   });
 
   // ── SUBMITTED_TO_PROVIDER → submit redemption ─────────────────────────────
   if (redReq.status === "SUBMITTED_TO_PROVIDER") {
+    if (!redReq.bankAccount?.accountNumber) {
+      throw new Error(`RedemptionRequest ${redemptionRequestId} is missing destination bank account details`);
+    }
+
     const result = await provider.initiateRedemption({
-      redemptionRequestId,
-      requestedUnits:      redReq.requestedUnits,
-      asset:               redReq.asset as "USDC",
-      network:             redReq.network as never,
-      destinationBankAccountId: redReq.bankAccountId,
+      requestId: redemptionRequestId,
+      stablecoinUnits: redReq.requestedUnits,
+      asset: redReq.asset as "USDC",
       sourceWalletAddress: redReq.sourceWallet?.address ?? "",
-      idempotencyKey:      redemptionRequestId,
+      sourceNetwork: redReq.network ?? "ETHEREUM",
+      entityId: redReq.entityId,
+      bankAccountRoutingNumber: redReq.bankAccount.routingNumber ?? "",
+      bankAccountNumber: redReq.bankAccount.accountNumber,
+      ...(redReq.reference ? { externalReference: redReq.reference } : {}),
     });
 
     await db.redemptionRequest.update({
       where: { id: redemptionRequestId },
       data: {
-        status:             "PROVIDER_PROCESSING",
-        providerRequestId:  result.providerTransferId,
+        status: "PROVIDER_PROCESSING",
+        providerRequestId: result.externalId,
+        providerSubmittedAt: new Date(),
       },
     });
 
@@ -76,7 +86,7 @@ export async function processRedemptionJob(
       eventType:     "redemption.provider_processing",
       aggregateType: "RedemptionRequest",
       aggregateId:   redemptionRequestId,
-      payload:       { providerTransferId: result.providerTransferId },
+      payload: { providerRequestId: result.externalId },
     });
 
     throw new Error("Redemption submitted — re-queue for polling"); // causes BullMQ to retry
@@ -84,11 +94,9 @@ export async function processRedemptionJob(
 
   // ── PROVIDER_PROCESSING → poll ────────────────────────────────────────
   if (redReq.status === "PROVIDER_PROCESSING" && redReq.providerRequestId) {
-    const status = await provider.checkRedemptionStatus({
-      providerTransferId: redReq.providerRequestId,
-    });
+    const status = await provider.checkRedemptionStatus(redReq.providerRequestId);
 
-    if (status.status === "SETTLED") {
+    if (status.status === "COMPLETED" || status.status === "FIAT_SENT") {
       await db.redemptionRequest.update({
         where: { id: redemptionRequestId },
         data: { status: "FIAT_RECEIVED" },
@@ -96,13 +104,13 @@ export async function processRedemptionJob(
     } else if (status.status === "FAILED" || status.status === "CANCELLED") {
       await db.redemptionRequest.update({
         where: { id: redemptionRequestId },
-        data: { status: "FAILED", failureReason: status.failureReason },
+        data: { status: "FAILED", failureReason: status.message ?? null },
       });
       await eventStore.emit({
-        eventType:     "redemption.failed",
+        eventType: "redemption.failed",
         aggregateType: "RedemptionRequest",
-        aggregateId:   redemptionRequestId,
-        payload:       { reason: status.failureReason },
+        aggregateId: redemptionRequestId,
+        payload: { reason: status.message ?? null },
       });
       return;
     } else {

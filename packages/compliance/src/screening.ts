@@ -15,6 +15,7 @@
  */
 
 import { getPrismaClient } from "@treasury/database";
+import type { Prisma } from "@prisma/client";
 import { requestFinnComplianceReview } from "./finn-bridge.js";
 
 export interface ScreeningResult {
@@ -25,6 +26,18 @@ export interface ScreeningResult {
   vendor?: string;
   /** Raw vendor reference / case ID */
   vendorRef?: string;
+}
+
+function withOptionalString<T extends Record<string, unknown>>(
+  base: T,
+  key: string,
+  value: string | undefined,
+): T & Record<string, unknown> {
+  return value ? { ...base, [key]: value } : base;
+}
+
+function toJsonValue(value: unknown): Prisma.InputJsonValue {
+  return value as Prisma.InputJsonValue;
 }
 
 export interface ScreeningHit {
@@ -225,13 +238,12 @@ async function chainalysisScreenAddress(params: {
     ? [{ listName: "CHAINALYSIS_KYT", matchType: "exact", entry: params.address, score: 1 }]
     : [];
 
-  return {
+  return withOptionalString({
     cleared:   !isHighRisk,
     hits,
     screenedAt: new Date(),
     vendor:    "chainalysis",
-    vendorRef: risk.cluster?.name,
-  };
+  }, "vendorRef", risk.cluster?.name) as ScreeningResult;
 }
 
 // ── Public API ───────────────────────────────────────────────────────────────
@@ -285,7 +297,7 @@ export async function screenCounterparty(params: {
   });
 
   if (finnReview?.block) {
-    result = {
+    result = withOptionalString({
       ...result,
       cleared: false,
       hits: [
@@ -297,8 +309,7 @@ export async function screenCounterparty(params: {
           score: Math.min(1, Math.max(0, (finnReview.riskScore ?? 100) / 100)),
         },
       ],
-      vendorRef: finnReview.referenceId ?? result.vendorRef,
-    };
+    }, "vendorRef", finnReview.referenceId ?? result.vendorRef) as ScreeningResult;
   }
 
   await db.auditLog.create({
@@ -306,7 +317,7 @@ export async function screenCounterparty(params: {
       action:     "SANCTIONS_SCREEN",
       resource:   "counterparty",
       resourceId: params.counterpartyId,
-      details:    {
+      details:    toJsonValue({
         legalName:   params.legalName,
         countryCode: params.countryCode,
         vendor,
@@ -314,7 +325,7 @@ export async function screenCounterparty(params: {
         hitCount:    result.hits.length,
         vendorRef:   result.vendorRef ?? null,
         finnReview,
-      },
+      }),
       ipAddress: "internal",
       userAgent: "sanctions-engine",
     },
@@ -371,7 +382,7 @@ export async function screenOnChainAddress(params: {
   });
 
   if (finnReview?.block) {
-    result = {
+    result = withOptionalString({
       ...result,
       cleared: false,
       hits: [
@@ -383,8 +394,7 @@ export async function screenOnChainAddress(params: {
           score: Math.min(1, Math.max(0, (finnReview.riskScore ?? 100) / 100)),
         },
       ],
-      vendorRef: finnReview.referenceId ?? result.vendorRef,
-    };
+    }, "vendorRef", finnReview.referenceId ?? result.vendorRef) as ScreeningResult;
   }
 
   await db.auditLog.create({
@@ -392,14 +402,14 @@ export async function screenOnChainAddress(params: {
       action:     "ON_CHAIN_ADDRESS_SCREEN",
       resource:   "wallet_address",
       resourceId: params.address,
-      details:    {
+      details:    toJsonValue({
         network:   params.network,
         vendor,
         cleared:   result.cleared,
         hitCount:  result.hits.length,
         vendorRef: result.vendorRef ?? null,
         finnReview,
-      },
+      }),
       ipAddress: "internal",
       userAgent: "sanctions-engine",
     },

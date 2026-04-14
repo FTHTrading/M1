@@ -257,7 +257,7 @@ export async function assuranceRoutes(fastify: FastifyInstance): Promise<void> {
       data: {
         resolved: true,
         resolvedAt: new Date(),
-        resolvedNote: req.body.note,
+        ...(req.body.note ? { resolvedNote: req.body.note } : {}),
       },
     });
 

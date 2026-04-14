@@ -15,7 +15,9 @@ export async function processReconciliationJob(
   job: Job<ReconciliationJobData>,
 ): Promise<{ entitiesProcessed: number; runsCreated: number }> {
   const db = getPrismaClient();
-  const log = (msg: string) => job.log(msg);
+  const log = async (msg: string): Promise<void> => {
+    await job.log(msg);
+  };
 
   const periodDate = new Date(job.data.periodDate ?? job.data.triggerTime ?? Date.now());
 
@@ -43,7 +45,7 @@ export async function processReconciliationJob(
       bankFiatBalanceCents,
       providerUsdcBalanceCents: providerBalances.usdc,
       providerUsdtBalanceCents: providerBalances.usdt,
-      runByUserId: job.data.runByUserId,
+      ...(job.data.runByUserId ? { runByUserId: job.data.runByUserId } : {}),
     });
 
     runsCreated += 1;
@@ -64,8 +66,8 @@ async function fetchProviderBalances(
   try {
     const circle = new CircleUsdcProvider({
       CIRCLE_API_KEY: process.env["CIRCLE_API_KEY"] ?? "",
-      CIRCLE_ENTITY_ID: process.env["CIRCLE_ENTITY_ID"],
-      CIRCLE_WALLET_ID: process.env["CIRCLE_WALLET_ID"],
+      ...(process.env["CIRCLE_ENTITY_ID"] ? { CIRCLE_ENTITY_ID: process.env["CIRCLE_ENTITY_ID"] } : {}),
+      ...(process.env["CIRCLE_WALLET_ID"] ? { CIRCLE_WALLET_ID: process.env["CIRCLE_WALLET_ID"] } : {}),
       CIRCLE_SANDBOX: process.env["CIRCLE_SANDBOX"] !== "false",
       CIRCLE_BASE_URL: process.env["CIRCLE_BASE_URL"] ?? "https://api-sandbox.circle.com",
       FEATURE_SANDBOX_ONLY: process.env["FEATURE_SANDBOX_ONLY"] !== "false",

@@ -64,11 +64,11 @@ export async function requestFinnComplianceReview(
     return {
       reviewed: data.reviewed ?? true,
       block: data.block ?? false,
-      reason: data.reason,
-      riskScore: data.riskScore,
-      tags: data.tags,
-      referenceId: data.referenceId,
       degraded: false,
+      ...(data.reason ? { reason: data.reason } : {}),
+      ...(data.riskScore !== undefined ? { riskScore: data.riskScore } : {}),
+      ...(data.tags ? { tags: data.tags } : {}),
+      ...(data.referenceId ? { referenceId: data.referenceId } : {}),
     };
   } catch (err) {
     return {

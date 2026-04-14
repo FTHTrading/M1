@@ -14,6 +14,7 @@
 
 import crypto from "crypto";
 import type { Job } from "bullmq";
+import type { Prisma } from "@prisma/client";
 import { getPrismaClient } from "@treasury/database";
 import {
   collectAllEvidence,
@@ -45,7 +46,7 @@ export async function runAuditJob(
     // ── Step 2: Collect evidence ────────────────────────────────────────────
 
     await log("[audit] collecting filesystem evidence...");
-    const evidence = await collectAllEvidence(repoRoot);
+    const evidence = await collectAllEvidence(repoRoot ?? process.cwd());
 
     await log(
       `[audit] evidence collected: ${evidence.prismaModels.length} models, ` +
@@ -79,15 +80,16 @@ export async function runAuditJob(
         const assessment = await tx.capabilityAssessment.create({
           data: {
             auditRunId,
-            capabilityKey: cap.definition.key,
-            category: cap.definition.category,
-            title: cap.definition.title,
-            description: cap.definition.description,
+            capabilityKey: cap.key,
+            category: cap.category,
+            title: cap.title,
+            description: cap.description,
             status: cap.status,
             maturityScore: Math.round(cap.maturityScore),
             confidence: cap.confidence,
             evidenceSummary: cap.evidenceSummary,
             gaps: cap.gaps,
+            ...(cap.notes ? { notes: cap.notes } : {}),
           },
         });
 
@@ -110,10 +112,10 @@ export async function runAuditJob(
         await tx.claimAssessment.createMany({
           data: result.claims.map((cl) => ({
             auditRunId,
-            claimKey: cl.definition.key,
-            category: cl.definition.category,
-            claim: cl.definition.claim,
-            source: cl.definition.source,
+            claimKey: cl.key,
+            category: cl.category,
+            claim: cl.claim,
+            source: cl.source,
             support: cl.support,
             confidence: cl.confidence,
             evidenceRefs: cl.evidenceRefs,
@@ -128,7 +130,7 @@ export async function runAuditJob(
           data: result.gaps.map((g) => ({
             auditRunId,
             gapKey: g.gapKey,
-            severity: g.severity,
+            severity: g.severity === "RESOLVED" ? "INFORMATIONAL" : g.severity,
             category: g.category,
             title: g.title,
             description: g.description,
@@ -136,7 +138,7 @@ export async function runAuditJob(
             remediation: g.remediation,
             effortEstimate: g.effortEstimate,
             externalDep: g.externalDep,
-            resolved: false,
+            resolved: g.severity === "RESOLVED",
           })),
         });
       }
@@ -173,36 +175,26 @@ export async function runAuditJob(
 
     await log("[audit] creating audit snapshot...");
 
-    // Convert Map to plain object for JSON serialisation
     const snapshotPayload = {
       ...result,
-      evidence: {
-        ...result.evidence,
-        packageFileContents: Object.fromEntries(
-          result.evidence.packageFileContents instanceof Map
-            ? result.evidence.packageFileContents
-            : [],
-        ),
-      },
       auditRunId,
       schemaVersion: SCHEMA_VERSION,
     };
 
     const payloadJson = JSON.stringify(snapshotPayload, null, 2);
+    const payloadValue = JSON.parse(payloadJson) as Prisma.InputJsonValue;
     const checksum = crypto.createHash("sha256").update(payloadJson).digest("hex");
 
     await db.auditSnapshot.upsert({
       where: { auditRunId },
       create: {
         auditRunId,
-        payload: payloadJson,
+        payload: payloadValue,
         checksum,
-        schemaVersion: SCHEMA_VERSION,
       },
       update: {
-        payload: payloadJson,
+        payload: payloadValue,
         checksum,
-        schemaVersion: SCHEMA_VERSION,
       },
     });
 

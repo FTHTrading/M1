@@ -25,7 +25,11 @@ export default function AuditPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ["audit-log", page, entityType],
-    queryFn: () => auditApi.list({ page, entityType: entityType || undefined }),
+    queryFn: () =>
+      auditApi.list({
+        page,
+        ...(entityType ? { entityType } : {}),
+      }),
   });
 
   const logs = data?.data ?? [];

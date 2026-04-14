@@ -21,20 +21,24 @@ export async function matchWireEventJob(job: Job<{ wireEventId: string }>): Prom
   if (!wireEvent) return;
 
   // Try to match by wire reference number against mint references
-  const mintReq = await db.mintRequest.findFirst({
-    where: {
-      status: "AWAITING_BANK_FUNDING",
-      OR: [
-        { reference: wireEvent.referenceNumber },
-        { bankFundingReference: wireEvent.referenceNumber },
-      ],
-    },
-  });
+  const matchReference = wireEvent.reference ?? wireEvent.bankReference;
+
+  const mintReq = matchReference
+    ? await db.mintRequest.findFirst({
+        where: {
+          status: "AWAITING_BANK_FUNDING",
+          OR: [
+            { reference: matchReference },
+            { bankFundingReference: matchReference },
+          ],
+        },
+      })
+    : null;
 
   if (!mintReq) {
     await db.wireEvent.update({
       where: { id: wireEvent.id },
-      data: { matchStatus: "UNMATCHED" },
+      data: { status: "UNMATCHED" },
     });
     return;
   }
@@ -44,15 +48,17 @@ export async function matchWireEventJob(job: Job<{ wireEventId: string }>): Prom
     db.wireEvent.update({
       where: { id: wireEvent.id },
       data: {
-        matchStatus:    "MATCHED",
-        mintRequestId:  mintReq.id,
+        status: "MATCHED",
+        matchedToType: "mint_request",
+        matchedToId: mintReq.id,
+        matchedAt: new Date(),
       },
     }),
     db.mintRequest.update({
       where: { id: mintReq.id },
       data: {
-        status:               "BANK_FUNDED",
-        bankFundingReference: wireEvent.referenceNumber,
+        status: "BANK_FUNDED",
+        ...(matchReference ? { bankFundingReference: matchReference } : {}),
       },
     }),
   ]);

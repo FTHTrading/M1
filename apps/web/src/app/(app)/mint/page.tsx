@@ -112,7 +112,7 @@ export default function MintPage() {
         asset:               form.asset,
         network:             form.network,
         requestedAmountCents: parseInt(form.requestedAmountCents, 10) * 100,
-        memo: form.memo || undefined,
+        ...(form.memo ? { memo: form.memo } : {}),
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["mint-requests"] });

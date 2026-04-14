@@ -15,12 +15,13 @@ export async function transferRoutes(fastify: FastifyInstance): Promise<void> {
       const [items, total] = await Promise.all([
         db.stablecoinTransfer.findMany({
           where: {
-            ...(req.query.entityId ? { entityId: req.query.entityId } : {}),
+            ...(req.query.entityId ? { mintRequest: { entityId: req.query.entityId } } : {}),
             ...(req.query.asset ? { asset: req.query.asset as never } : {}),
           },
           include: {
-            mintRequest:       { select: { reference: true } },
-            redemptionRequest: { select: { reference: true } },
+            mintRequest: { select: { reference: true } },
+            fromWallet: { select: { label: true, address: true } },
+            toWallet: { select: { label: true, address: true } },
           },
           orderBy: { createdAt: "desc" },
           skip: (page - 1) * pageSize,
@@ -28,7 +29,7 @@ export async function transferRoutes(fastify: FastifyInstance): Promise<void> {
         }),
         db.stablecoinTransfer.count({
           where: {
-            ...(req.query.entityId ? { entityId: req.query.entityId } : {}),
+            ...(req.query.entityId ? { mintRequest: { entityId: req.query.entityId } } : {}),
             ...(req.query.asset ? { asset: req.query.asset as never } : {}),
           },
         }),
@@ -43,7 +44,8 @@ export async function transferRoutes(fastify: FastifyInstance): Promise<void> {
       where: { id: req.params.id },
       include: {
         mintRequest: true,
-        redemptionRequest: true,
+        fromWallet: true,
+        toWallet: true,
       },
     });
     if (!transfer) return reply.code(404).send({ error: "Transfer not found" });

@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { getPrismaClient } from "@treasury/database";
-import bcrypt from "bcryptjs";
+import * as bcrypt from "bcryptjs";
 import { z } from "zod";
 
 const loginSchema = z.object({
@@ -20,10 +20,10 @@ export async function authRoutes(fastify: FastifyInstance): Promise<void> {
 
     const user = await db.user.findUnique({
       where: { email: body.data.email },
-      include: { userRoles: { include: { role: true } } },
+      include: { roles: { include: { role: true } } },
     });
 
-    if (!user || !user.isActive) {
+    if (!user || user.status !== "ACTIVE") {
       return reply.code(401).send({ error: "Unauthorized", message: "Invalid credentials" });
     }
 
@@ -32,11 +32,11 @@ export async function authRoutes(fastify: FastifyInstance): Promise<void> {
       return reply.code(401).send({ error: "Unauthorized", message: "Invalid credentials" });
     }
 
-    const roles = user.userRoles.map((ur) => ur.role.name);
+    const roles = user.roles.map((ur) => ur.role.name);
     const token = fastify.jwt.sign({
       sub: user.id,
       email: user.email,
-      name: user.fullName,
+      name: user.name,
       roles,
     });
 
@@ -52,7 +52,7 @@ export async function authRoutes(fastify: FastifyInstance): Promise<void> {
 
     return reply.send({
       token,
-      user: { id: user.id, email: user.email, name: user.fullName, roles },
+      user: { id: user.id, email: user.email, name: user.name, roles },
     });
   });
 
@@ -63,9 +63,8 @@ export async function authRoutes(fastify: FastifyInstance): Promise<void> {
     async (request, reply) => {
       const authHeader = request.headers.authorization ?? "";
       const token = authHeader.replace("Bearer ", "");
-      await db.userSession.updateMany({
+      await db.userSession.deleteMany({
         where: { token },
-        data: { revokedAt: new Date() },
       });
       return reply.code(204).send();
     },
@@ -79,14 +78,14 @@ export async function authRoutes(fastify: FastifyInstance): Promise<void> {
       const payload = request.user as { sub: string };
       const user = await db.user.findUnique({
         where: { id: payload.sub },
-        include: { userRoles: { include: { role: true } } },
+        include: { roles: { include: { role: true } } },
       });
       if (!user) return reply.code(404).send({ error: "User not found" });
       return reply.send({
         id: user.id,
         email: user.email,
-        name: user.fullName,
-        roles: user.userRoles.map((ur) => ur.role.name),
+        name: user.name,
+        roles: user.roles.map((ur) => ur.role.name),
       });
     },
   );

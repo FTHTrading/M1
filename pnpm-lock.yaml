@@ -95,6 +95,9 @@ importers:
       '@treasury/types':
         specifier: workspace:*
         version: link:../../packages/types
+      bcryptjs:
+        specifier: ^2.4.3
+        version: 2.4.3
       bullmq:
         specifier: ^5.7.8
         version: 5.73.5
@@ -410,6 +413,9 @@ importers:
       '@treasury/database':
         specifier: workspace:*
         version: link:../database
+      '@treasury/ledger':
+        specifier: workspace:*
+        version: link:../ledger
       '@treasury/providers':
         specifier: workspace:*
         version: link:../providers
@@ -2582,6 +2588,9 @@ packages:
     resolution: {integrity: sha512-VSnGQAOLtP5mib/DPyg2/t+Tlv65NTBz83BJBJvmLVHHuKJVaDOBvJJykiT5TR++em5nfAySPccDZDa4oSrn8A==}
     engines: {node: '>=6.0.0'}
     hasBin: true
+
+  bcryptjs@2.4.3:
+    resolution: {integrity: sha512-V/Hy/X9Vt7f3BbPJEi8BdVFMByHi+jNXrYkW3huaybV/kQ0KJg0Y6PkEMbn+zeT+i+SiKZ/HMqJGIIt4LZDqNQ==}
 
   bignumber.js@9.3.1:
     resolution: {integrity: sha512-Ko0uX15oIUS7wJ3Rb30Fs6SkVbLmPBAKdlm7q9+ak9bbIeFf0MwuBsQV6z7+X768/cHsfg+WlysDWJcmthjsjQ==}
@@ -6383,6 +6392,8 @@ snapshots:
   balanced-match@1.0.2: {}
 
   baseline-browser-mapping@2.10.18: {}
+
+  bcryptjs@2.4.3: {}
 
   bignumber.js@9.3.1: {}
 

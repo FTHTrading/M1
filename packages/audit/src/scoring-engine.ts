@@ -157,7 +157,7 @@ export function assessCapability(
     evidenceSummary,
     evidenceItems,
     gaps: def.gaps,
-    notes: def.notes,
+    ...(def.notes !== undefined ? { notes: def.notes } : {}),
   };
 }
 

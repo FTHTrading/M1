@@ -56,7 +56,7 @@ export default function ClaimsPage() {
   const items = (data?.items ?? []).filter(
     (c) =>
       !search ||
-      c.claimText.toLowerCase().includes(search.toLowerCase()) ||
+      c.claim.toLowerCase().includes(search.toLowerCase()) ||
       c.claimKey.toLowerCase().includes(search.toLowerCase()),
   );
 
