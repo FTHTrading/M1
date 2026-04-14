@@ -606,6 +606,41 @@
       .mb-arrow-wrap { padding: .5rem 0; justify-content: center; transform: rotate(90deg); }
       .mb-center { border-left: none; border-right: none; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
     }
+
+    /* === JURISDICTION === */
+    .jx-forums { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.25rem; margin: 2.5rem 0; }
+    .forum-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; transition: border-color .2s; }
+    .forum-card:hover { border-color: var(--primary); }
+    .forum-badge { display: inline-flex; align-items: center; font-size: .75rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; padding: .3rem .7rem; border-radius: 999px; margin-bottom: .75rem; }
+    .forum-name { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: .4rem; }
+    .forum-desc { font-size: .83rem; color: var(--muted); line-height: 1.55; margin-bottom: .8rem; }
+    .forum-matter { font-size: .78rem; background: rgba(0,153,255,.07); border: 1px solid rgba(0,153,255,.15); border-radius: 6px; padding: .4rem .65rem; color: var(--primary); }
+    .jx-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: .85rem; margin: 2.5rem 0; }
+    .jx-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.1rem 1rem; transition: border-color .2s; }
+    .jx-card:hover { border-color: var(--primary); }
+    .jx-flag { font-size: 1.5rem; margin-bottom: .4rem; }
+    .jx-region { font-weight: 700; color: var(--text); font-size: .88rem; margin-bottom: .3rem; }
+    .jx-framework { font-size: .74rem; color: var(--muted); line-height: 1.45; }
+    .matter-showcase { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; margin: 2.5rem 0; }
+    .matter-card { background: var(--card); border: 1px solid var(--border); border-left-width: 3px; border-radius: var(--radius); padding: 1.5rem; }
+    .matter-ref { font-size: .7rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: var(--primary); margin-bottom: .45rem; }
+    .matter-title { font-size: .95rem; font-weight: 700; color: var(--text); margin-bottom: .35rem; }
+    .matter-value { font-size: 1.4rem; font-weight: 800; color: var(--green); margin-bottom: .3rem; }
+    .matter-forum { font-size: .76rem; color: var(--muted); }
+    .edd-callout { background: linear-gradient(135deg, rgba(124,58,237,.1), rgba(0,153,255,.07)); border: 1px solid rgba(124,58,237,.22); border-radius: var(--radius); padding: 1.75rem 2rem; margin-top: 2.25rem; display: grid; grid-template-columns: auto 1fr; gap: 1.25rem; align-items: start; }
+    .edd-icon { font-size: 2rem; line-height: 1; }
+    .edd-title { font-weight: 700; color: var(--text); margin-bottom: .4rem; }
+    .edd-tags { display: flex; flex-wrap: wrap; gap: .4rem; }
+    .edd-tag { font-size: .74rem; background: rgba(124,58,237,.12); border: 1px solid rgba(124,58,237,.2); color: #a78bfa; padding: .25rem .55rem; border-radius: 4px; }
+    .jx-sub { font-size: 1rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin: 3rem 0 1.25rem; }
+    @media (max-width: 700px) {
+      .jx-forums { grid-template-columns: 1fr 1fr; }
+      .matter-showcase { grid-template-columns: 1fr; }
+      .edd-callout { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 480px) {
+      .jx-forums { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -619,6 +654,7 @@
     <li><a href="#how-it-works">How It Works</a></li>
     <li><a href="#capabilities">Capabilities</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
+    <li><a href="#jurisdiction">Jurisdiction</a></li>
     <li><a href="#contact" class="nav-cta">Get Started</a></li>
   </ul>
   <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
@@ -1217,6 +1253,151 @@
           <span class="rm-tag">DEX Listing</span>
           <span class="rm-tag">White-Label Dashboard</span>
           <span class="rm-tag">Multi-Entity Expansion</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- JURISDICTION -->
+<section id="jurisdiction" style="padding:5rem 0;">
+  <div style="max-width:1200px;margin:0 auto;padding:0 2rem;">
+    <div class="reveal" style="text-align:center;margin-bottom:3rem;">
+      <span class="section-tag">Compliance</span>
+      <h2>Global Jurisdiction<br/>Coverage</h2>
+      <p class="section-desc">
+        M1 operates across all major regulatory frameworks — from the FATF 40
+        Recommendations baseline through jurisdiction-specific licensing regimes.
+        Every transaction is governed by the rules of the applicable venue, with
+        on-chain compliance anchoring and sovereign-grade EDD controls built into
+        the Apostle Chain ledger.
+      </p>
+    </div>
+
+    <div class="jx-sub reveal">International Arbitration Forums</div>
+    <div class="jx-forums">
+      <div class="forum-card reveal">
+        <div class="forum-badge" style="background:rgba(0,153,255,.12);color:var(--primary);">ICC</div>
+        <div class="forum-name">International Chamber of Commerce</div>
+        <div class="forum-desc">Paris-seated. ICC Rules 2021. Preferred for multi-jurisdictional sovereign digital asset disputes — enforceable across 170+ states via the New York Convention.</div>
+        <div class="forum-matter">🔵 ICC-2026-GULF-001 &middot; $2.4B sovereign recovery &middot; ADGM</div>
+      </div>
+      <div class="forum-card reveal">
+        <div class="forum-badge" style="background:rgba(0,230,118,.12);color:var(--green);">LCIA</div>
+        <div class="forum-name">London Court of International Arbitration</div>
+        <div class="forum-desc">England & Wales seated. LCIA Rules 2020. Arbitration Act 1996. Common for EU MiCA regulatory disputes with English law as governing law.</div>
+        <div class="forum-matter">🟢 LCIA-2026-EU-001 &middot; &euro;890M MiCA regulatory defense &middot; London</div>
+      </div>
+      <div class="forum-card reveal">
+        <div class="forum-badge" style="background:rgba(255,107,53,.12);color:var(--orange);">UNCITRAL</div>
+        <div class="forum-name">UN Commission on International Trade Law</div>
+        <div class="forum-desc">Ad hoc arbitration rules 2010. Singapore-seated, SICC-administered. Preferred for Asia-Pacific stablecoin and MAS-regulated digital payment disputes.</div>
+        <div class="forum-matter">🟠 UNCITRAL-2026-APAC-001 &middot; SGD 1.2B MAS stablecoin dispute &middot; SICC</div>
+      </div>
+      <div class="forum-card reveal">
+        <div class="forum-badge" style="background:rgba(124,58,237,.12);color:#a78bfa;">ICSID</div>
+        <div class="forum-name">Intl. Centre for Settlement of Investment Disputes</div>
+        <div class="forum-desc">World Bank, Washington D.C. BIT-based sovereign investor-state arbitration. Applied when a state&#8217;s expropriation of a digital asset treasury triggers treaty obligations.</div>
+        <div class="forum-matter">🟣 ICSID-2026-LATAM-001 &middot; $3.1B BIT expropriation &middot; Sovereign</div>
+      </div>
+    </div>
+
+    <div class="jx-sub reveal">Regulatory Frameworks Covered</div>
+    <div class="jx-grid">
+      <div class="jx-card reveal">
+        <div class="jx-flag">🇺🇸</div>
+        <div class="jx-region">United States</div>
+        <div class="jx-framework">FinCEN / BSA &middot; OFAC SDN &middot; SEC Reg D &middot; FINRA &middot; FBI IC3</div>
+      </div>
+      <div class="jx-card reveal">
+        <div class="jx-flag">🇪🇺</div>
+        <div class="jx-region">European Union</div>
+        <div class="jx-framework">MiCA 2023/1114 &middot; AMLD6 &middot; EMIR Refit &middot; GDPR Art.17</div>
+      </div>
+      <div class="jx-card reveal">
+        <div class="jx-flag">🇬🇧</div>
+        <div class="jx-region">United Kingdom</div>
+        <div class="jx-framework">FCA COBS 11 &middot; POCA 2002 &middot; MLR 2017 &middot; Arbitration Act 1996</div>
+      </div>
+      <div class="jx-card reveal">
+        <div class="jx-flag">🇸🇬</div>
+        <div class="jx-region">Singapore</div>
+        <div class="jx-framework">MAS PSA 2019 &middot; PS(A)A 2021 &middot; PDPA &middot; MAS Notice TRM</div>
+      </div>
+      <div class="jx-card reveal">
+        <div class="jx-flag">🇦🇪</div>
+        <div class="jx-region">UAE / ADGM</div>
+        <div class="jx-framework">FSRA MKT Rules &middot; UAE AML Decree-Law 20/2018 &middot; ADGM FinTech</div>
+      </div>
+      <div class="jx-card reveal">
+        <div class="jx-flag">🇨🇭</div>
+        <div class="jx-region">Switzerland</div>
+        <div class="jx-framework">FINMA AMLA &middot; Banking Act &middot; FinSA &middot; DLT Act 2021</div>
+      </div>
+      <div class="jx-card reveal">
+        <div class="jx-flag">🇯🇵</div>
+        <div class="jx-region">Japan</div>
+        <div class="jx-framework">FSA Payment Services Act &middot; FIEA &middot; JVCEA self-regulatory</div>
+      </div>
+      <div class="jx-card reveal">
+        <div class="jx-flag">🇰🇾</div>
+        <div class="jx-region">Cayman Islands</div>
+        <div class="jx-framework">CIMA SIBA &middot; VASPA 2020 &middot; FATF member</div>
+      </div>
+      <div class="jx-card reveal">
+        <div class="jx-flag">🇻🇬</div>
+        <div class="jx-region">BVI</div>
+        <div class="jx-framework">FSC VASP Act 2022 &middot; BVI AML Regulations 2008</div>
+      </div>
+    </div>
+
+    <div class="jx-sub reveal">Live Sovereign Matters on Platform</div>
+    <div class="matter-showcase">
+      <div class="matter-card reveal" style="border-left-color:var(--primary);">
+        <div class="matter-ref">ICC-2026-GULF-001</div>
+        <div class="matter-title">Gulf Sovereign Digital Asset Recovery</div>
+        <div class="matter-value">$2.4B</div>
+        <div class="matter-forum">ICC &middot; ADGM &middot; UAE AML Law 20/2018 &middot; FATF High-Risk Enhanced</div>
+      </div>
+      <div class="matter-card reveal" style="border-left-color:var(--green);">
+        <div class="matter-ref">LCIA-2026-EU-001</div>
+        <div class="matter-title">EU MiCA Regulatory Defense</div>
+        <div class="matter-value">&euro;890M</div>
+        <div class="matter-forum">LCIA &middot; England &middot; MiCA 2023/1114 &middot; AMLD6 &middot; GDPR</div>
+      </div>
+      <div class="matter-card reveal" style="border-left-color:var(--orange);">
+        <div class="matter-ref">UNCITRAL-2026-APAC-001</div>
+        <div class="matter-title">Singapore MAS Stablecoin Dispute</div>
+        <div class="matter-value">SGD 1.2B</div>
+        <div class="matter-forum">UNCITRAL &middot; SICC &middot; MAS PSA 2019 &middot; PS(A)A 2021</div>
+      </div>
+      <div class="matter-card reveal" style="border-left-color:#a78bfa;">
+        <div class="matter-ref">ICSID-2026-LATAM-001</div>
+        <div class="matter-title">Sovereign BIT Expropriation Claim</div>
+        <div class="matter-value">$3.1B</div>
+        <div class="matter-forum">ICSID &middot; World Bank &middot; Bilateral Investment Treaty &middot; Int&#8217;l Law</div>
+      </div>
+    </div>
+
+    <div class="edd-callout reveal">
+      <div class="edd-icon">🔒</div>
+      <div>
+        <div class="edd-title">Sovereign &amp; Institutional EDD Controls</div>
+        <p style="font-size:.84rem;color:var(--muted);margin:.35rem 0 .8rem;">
+          Enhanced Due Diligence is automatically triggered for sovereign entities, PEP-adjacent
+          structures, FATF high-risk jurisdictions, and matters above the $50M institutional
+          threshold. Every EDD event is anchored on-chain to the Apostle Chain ledger (chain ID 7332)
+          providing an immutable, tamper-evident compliance record.
+        </p>
+        <div class="edd-tags">
+          <span class="edd-tag">Sovereign Entity Detection</span>
+          <span class="edd-tag">PEP Screening</span>
+          <span class="edd-tag">FATF High-Risk Flag</span>
+          <span class="edd-tag">$50M+ Threshold Trigger</span>
+          <span class="edd-tag">Multi-Signatory Approval</span>
+          <span class="edd-tag">On-Chain Audit Anchor</span>
+          <span class="edd-tag">OFAC SDN Real-Time Check</span>
+          <span class="edd-tag">BIT / Sovereign Immunity Review</span>
         </div>
       </div>
     </div>
