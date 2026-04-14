@@ -1,0 +1,38 @@
+{
+  "name": "@treasury/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "^1.8.0",
+    "@opentelemetry/auto-instrumentations-node": "^0.47.1",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.51.1",
+    "@opentelemetry/sdk-node": "^0.51.1",
+    "@treasury/audit": "workspace:*",
+    "@treasury/compliance": "workspace:*",
+    "@treasury/config": "workspace:*",
+    "@treasury/database": "workspace:*",
+    "@treasury/events": "workspace:*",
+    "@treasury/ledger": "workspace:*",
+    "@treasury/providers": "workspace:*",
+    "@treasury/reconciliation": "workspace:*",
+    "@treasury/types": "workspace:*",
+    "bullmq": "^5.7.8",
+    "ioredis": "^5.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.11",
+    "rimraf": "^5.0.7",
+    "tsx": "^4.10.4",
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.0"
+  }
+}

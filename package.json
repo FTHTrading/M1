@@ -1,0 +1,40 @@
+{
+  "name": "stablecoin-treasury-os",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@9.1.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
+    "test": "turbo run test",
+    "e2e": "turbo run e2e",
+    "db:up": "docker compose -f docker/docker-compose.yml up -d postgres redis minio",
+    "db:migrate": "pnpm --filter @treasury/database migrate:deploy",
+    "db:migrate:dev": "pnpm --filter @treasury/database migrate:dev",
+    "db:seed": "pnpm --filter @treasury/database seed",
+    "db:studio": "pnpm --filter @treasury/database studio",
+    "db:reset": "pnpm --filter @treasury/database migrate:reset",
+    "typecheck": "turbo run typecheck",
+    "clean": "turbo run clean && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.2.5",
+    "turbo": "^2.1.0",
+    "typescript": "^5.4.5"
+  },
+  "pnpm": {
+    "overrides": {
+      "typescript": "^5.4.5"
+    }
+  }
+}

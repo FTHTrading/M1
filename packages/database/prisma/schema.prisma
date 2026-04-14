@@ -1,0 +1,1206 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+  DEACTIVATED
+}
+
+enum RoleName {
+  super_admin
+  treasury_operator
+  treasury_approver
+  compliance_officer
+  finance_controller
+  auditor
+  read_only
+}
+
+enum EntityStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING_KYB
+}
+
+enum EntityType {
+  CORPORATION
+  LLC
+  PARTNERSHIP
+  TRUST
+  GOVERNMENT
+  FINANCIAL_INSTITUTION
+  OTHER
+}
+
+enum BankAccountStatus {
+  ACTIVE
+  INACTIVE
+  PENDING_VERIFICATION
+  SUSPENDED
+}
+
+enum BankAccountType {
+  CHECKING
+  SAVINGS
+  MONEY_MARKET
+  NOSTRO
+}
+
+enum TreasuryAccountStatus {
+  ACTIVE
+  INACTIVE
+  FROZEN
+}
+
+enum WalletStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING_WHITELIST_REVIEW
+}
+
+enum NetworkType {
+  ETHEREUM
+  SOLANA
+  POLYGON
+  BASE
+  TRON
+  STELLAR
+  XRPL
+}
+
+enum StablecoinAsset {
+  USDC
+  USDT
+}
+
+enum CounterpartyType {
+  CIRCLE
+  TETHER_OTC
+  OTC_DESK
+  EXCHANGE
+  INSTITUTIONAL_CLIENT
+  BANK
+  CUSTODIAN
+  OTHER
+}
+
+enum CounterpartyStatus {
+  ACTIVE
+  INACTIVE
+  BLACKLISTED
+  PENDING_REVIEW
+}
+
+enum KybStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+enum KycStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+enum SanctionsScreeningResult {
+  CLEAR
+  HIT
+  PENDING
+  REVIEW_REQUIRED
+  NOT_SCREENED
+}
+
+enum MintRequestStatus {
+  DRAFT
+  PENDING_COMPLIANCE
+  COMPLIANCE_HOLD
+  PENDING_APPROVAL
+  APPROVED
+  AWAITING_BANK_FUNDING
+  BANK_FUNDED
+  SUBMITTED_TO_PROVIDER
+  PROVIDER_PROCESSING
+  MINT_COMPLETED
+  SETTLEMENT_INITIATED
+  SETTLED
+  FAILED
+  CANCELLED
+  EXPIRED
+}
+
+enum RedemptionRequestStatus {
+  DRAFT
+  PENDING_COMPLIANCE
+  COMPLIANCE_HOLD
+  PENDING_APPROVAL
+  APPROVED
+  SUBMITTED_TO_PROVIDER
+  PROVIDER_PROCESSING
+  REDEMPTION_COMPLETED
+  AWAITING_FIAT_RECEIPT
+  FIAT_RECEIVED
+  SETTLED
+  FAILED
+  CANCELLED
+  EXPIRED
+}
+
+enum TransferStatus {
+  PENDING
+  SUBMITTED
+  CONFIRMING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+enum ApprovalDecision {
+  APPROVE
+  REJECT
+  REQUEST_MORE_INFO
+}
+
+enum ReconciliationStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+  PARTIAL
+}
+
+enum ReconciliationBreakType {
+  UNDERFUNDED_MINT
+  UNMATCHED_WIRE
+  FAILED_WALLET_TRANSFER
+  STALE_PROVIDER_STATUS
+  LEDGER_IMBALANCE
+  WALLET_BALANCE_MISMATCH
+  PROVIDER_BALANCE_MISMATCH
+  MISSING_JOURNAL_ENTRY
+  DUPLICATE_TRANSACTION
+  OTHER
+}
+
+enum BreakStatus {
+  OPEN
+  UNDER_INVESTIGATION
+  RESOLVED
+  ESCALATED
+  WAIVED
+}
+
+enum ReportJobStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum ReportType {
+  DAILY_TREASURY_SUMMARY
+  STABLECOIN_INVENTORY
+  FIAT_TO_STABLECOIN_CONVERSION
+  STABLECOIN_TO_FIAT_REDEMPTION
+  WALLET_DISTRIBUTION
+  AUDIT_LOG_EXPORT
+  RECONCILIATION_EXCEPTION
+  PERIOD_ACTIVITY_STATEMENT
+}
+
+enum WebhookDeliveryStatus {
+  PENDING
+  DELIVERED
+  FAILED
+  RETRYING
+}
+
+enum ComplianceCaseStatus {
+  OPEN
+  UNDER_REVIEW
+  ESCALATED
+  CLOSED_CLEARED
+  CLOSED_VERIFIED_SUSPICIOUS
+  REFERRED_TO_AUTHORITIES
+}
+
+enum JournalEntryStatus {
+  DRAFT
+  POSTED
+  REVERSED
+}
+
+// ─── Users & Auth ─────────────────────────────────────────────────────────────
+
+model User {
+  id                String     @id @default(cuid())
+  email             String     @unique
+  emailVerified     Boolean    @default(false)
+  name              String
+  passwordHash      String
+  status            UserStatus @default(PENDING_VERIFICATION)
+  mfaEnabled        Boolean    @default(false)
+  mfaSecret         String?
+  lastLoginAt       DateTime?
+  lastLoginIp       String?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  roles             UserRole[]
+  approvals         Approval[]
+  initiatedMints    MintRequest[]      @relation("MintInitiator")
+  initiatedRedemptions RedemptionRequest[] @relation("RedemptionInitiator")
+  auditLogs         AuditLog[]
+  sessions          UserSession[]
+  complianceCases   ComplianceCase[]   @relation("CaseAssignee")
+
+  @@map("users")
+}
+
+model UserSession {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_sessions")
+}
+
+model Role {
+  id          String     @id @default(cuid())
+  name        RoleName   @unique
+  displayName String
+  description String
+  createdAt   DateTime   @default(now())
+
+  userRoles   UserRole[]
+  permissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String   @id @default(cuid())
+  resource    String   // e.g. "mint_requests"
+  action      String   // e.g. "create", "approve", "read", "delete"
+  description String?
+  createdAt   DateTime @default(now())
+
+  rolePermissions RolePermission[]
+
+  @@unique([resource, action])
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           String     @id @default(cuid())
+  roleId       String
+  permissionId String
+  createdAt    DateTime   @default(now())
+
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model UserRole {
+  id        String   @id @default(cuid())
+  userId    String
+  roleId    String
+  entityId  String?  // scoped to entity, null = global
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  entity    Entity?  @relation(fields: [entityId], references: [id])
+
+  @@unique([userId, roleId, entityId])
+  @@map("user_roles")
+}
+
+// ─── Legal Entities ───────────────────────────────────────────────────────────
+
+model Entity {
+  id                  String       @id @default(cuid())
+  legalName           String
+  tradingName         String?
+  entityType          EntityType
+  status              EntityStatus @default(PENDING_KYB)
+  countryOfIncorporation String
+  registrationNumber  String?
+  taxId               String?
+  address             Json         // { street, city, state, postalCode, country }
+  contactEmail        String
+  contactPhone        String?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  bankAccounts        BankAccount[]
+  treasuryAccounts    TreasuryAccount[]
+  wallets             Wallet[]
+  complianceProfile   ComplianceProfile?
+  userRoles           UserRole[]
+  mintRequests        MintRequest[]
+  redemptionRequests  RedemptionRequest[]
+  reportJobs          ReportJob[]
+  journalEntries      JournalEntry[]
+
+  @@map("entities")
+}
+
+// ─── Banking ──────────────────────────────────────────────────────────────────
+
+model BankAccount {
+  id              String            @id @default(cuid())
+  entityId        String
+  accountName     String
+  bankName        String
+  accountNumber   String            // encrypted in app layer
+  routingNumber   String?
+  iban            String?
+  swift           String?
+  currency        String            @default("USD")
+  accountType     BankAccountType
+  status          BankAccountStatus @default(PENDING_VERIFICATION)
+  isVerified      Boolean           @default(false)
+  verifiedAt      DateTime?
+  notes           String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  entity          Entity            @relation(fields: [entityId], references: [id])
+  treasuryAccounts TreasuryAccount[]
+  statementImports StatementImport[]
+  wireEvents      WireEvent[]
+  redemptionRequests RedemptionRequest[]
+
+  @@map("bank_accounts")
+}
+
+model TreasuryAccount {
+  id                      String                @id @default(cuid())
+  entityId                String
+  bankAccountId           String?
+  name                    String
+  description             String?
+  status                  TreasuryAccountStatus @default(ACTIVE)
+  // Balances stored in cents (integer to avoid floating-point)
+  fiatBalanceCents        BigInt                @default(0)
+  restrictedFiatCents     BigInt                @default(0)
+  pendingConversionCents  BigInt                @default(0)
+  settledUsdcUnits        BigInt                @default(0)  // 6 decimal places
+  settledUsdtUnits        BigInt                @default(0)  // 6 decimal places
+  createdAt               DateTime              @default(now())
+  updatedAt               DateTime              @updatedAt
+
+  entity                  Entity                @relation(fields: [entityId], references: [id])
+  bankAccount             BankAccount?          @relation(fields: [bankAccountId], references: [id])
+  mintRequests            MintRequest[]
+  redemptionRequests      RedemptionRequest[]
+
+  @@map("treasury_accounts")
+}
+
+// ─── Wallets ──────────────────────────────────────────────────────────────────
+
+model Wallet {
+  id              String        @id @default(cuid())
+  entityId        String
+  label           String
+  network         NetworkType
+  asset           StablecoinAsset
+  address         String
+  status          WalletStatus  @default(PENDING_WHITELIST_REVIEW)
+  isWhitelisted   Boolean       @default(false)
+  whitelistedAt   DateTime?
+  whitelistedById String?
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  entity          Entity        @relation(fields: [entityId], references: [id])
+  whitelistEntries WalletWhitelistEntry[]
+  outboundTransfers StablecoinTransfer[] @relation("FromWallet")
+  inboundTransfers  StablecoinTransfer[] @relation("ToWallet")
+  mintSettlements   MintRequest[]  @relation("SettlementWallet")
+  redemptionSources RedemptionRequest[] @relation("RedemptionSourceWallet")
+
+  @@unique([network, address])
+  @@map("wallets")
+}
+
+model WalletWhitelistEntry {
+  id          String   @id @default(cuid())
+  walletId    String
+  approvedById String
+  approvedAt  DateTime @default(now())
+  reason      String
+  evidence    Json?    // reference to evidence files
+
+  wallet      Wallet   @relation(fields: [walletId], references: [id])
+
+  @@map("wallet_whitelist_entries")
+}
+
+// ─── Counterparties ───────────────────────────────────────────────────────────
+
+model Counterparty {
+  id              String             @id @default(cuid())
+  name            String
+  type            CounterpartyType
+  status          CounterpartyStatus @default(PENDING_REVIEW)
+  kybStatus       KybStatus          @default(NOT_STARTED)
+  sanctionsResult SanctionsScreeningResult @default(NOT_SCREENED)
+  sanctionsCheckedAt DateTime?
+  contactEmail    String?
+  contactPhone    String?
+  address         Json?
+  referenceCode   String?            // for Tether OTC reference
+  notes           String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  mintRequests    MintRequest[]
+  redemptionRequests RedemptionRequest[]
+  complianceProfile  ComplianceProfile? @relation("CounterpartyCompliance")
+
+  @@map("counterparties")
+}
+
+// ─── Compliance ───────────────────────────────────────────────────────────────
+
+model ComplianceProfile {
+  id                  String                   @id @default(cuid())
+  entityId            String?                  @unique
+  counterpartyId      String?                  @unique
+  kycStatus           KycStatus                @default(NOT_STARTED)
+  kybStatus           KybStatus                @default(NOT_STARTED)
+  sanctionsResult     SanctionsScreeningResult @default(NOT_SCREENED)
+  sanctionsCheckedAt  DateTime?
+  pep                 Boolean                  @default(false)       // politically exposed person
+  riskRating          String?                  // LOW / MEDIUM / HIGH / CRITICAL
+  reviewedById        String?
+  reviewedAt          DateTime?
+  nextReviewAt        DateTime?
+  restrictedJurisdictions String[]
+  notes               String?
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
+
+  entity              Entity?                  @relation(fields: [entityId], references: [id])
+  counterparty        Counterparty?            @relation("CounterpartyCompliance", fields: [counterpartyId], references: [id])
+  cases               ComplianceCase[]
+
+  @@map("compliance_profiles")
+}
+
+model ComplianceCase {
+  id                  String               @id @default(cuid())
+  complianceProfileId String
+  assigneeId          String?
+  status              ComplianceCaseStatus @default(OPEN)
+  subject             String
+  description         String
+  riskRating          String
+  sourceReferenceType String?              // "mint_request" | "redemption_request" | "transfer"
+  sourceReferenceId   String?
+  resolvedAt          DateTime?
+  resolvedNotes       String?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+
+  complianceProfile   ComplianceProfile    @relation(fields: [complianceProfileId], references: [id])
+  assignee            User?                @relation("CaseAssignee", fields: [assigneeId], references: [id])
+  evidenceFiles       EvidenceFile[]
+
+  @@map("compliance_cases")
+}
+
+// ─── Mint Requests ────────────────────────────────────────────────────────────
+
+model MintRequest {
+  id                    String            @id @default(cuid())
+  entityId              String
+  treasuryAccountId     String
+  initiatedById         String
+  counterpartyId        String?
+  settlementWalletId    String?
+
+  reference             String?           @unique // e.g. MINT-1234567
+  memo                  String?           @db.Text
+  network               NetworkType?
+  requiresApproval      Boolean           @default(false)
+
+  asset                 StablecoinAsset
+  requestedAmountCents  BigInt            // fiat USD cents
+  quotedUnits           BigInt?           // stablecoin units (6 decimals)
+  mintedUnits           BigInt?
+  networkFeeCents       BigInt?
+  custodyFeeCents       BigInt?
+  settledUnits          BigInt?
+
+  status                MintRequestStatus @default(DRAFT)
+  providerRequestId     String?           // Circle payment intent ID or similar
+  providerStatus        String?
+  providerResponse      Json?
+  bankFundingReference  String?           // wire/ACH ref number
+  bankFundingConfirmedAt DateTime?
+  providerSubmittedAt   DateTime?
+  mintCompletedAt       DateTime?
+  settledAt             DateTime?
+  fthTevVerdict         String?
+  fthTevScore           Int?
+  fthTevRiskTags        Json?
+  fthTevReference       String?
+  fthTevCheckedAt       DateTime?
+  apostleTxHash         String?
+  apostleStatus         String?
+  apostleSettledAt      DateTime?
+  failureReason         String?
+  complianceHoldReason  String?
+  expiresAt             DateTime?
+
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  entity                Entity            @relation(fields: [entityId], references: [id])
+  treasuryAccount       TreasuryAccount   @relation(fields: [treasuryAccountId], references: [id])
+  initiatedBy           User              @relation("MintInitiator", fields: [initiatedById], references: [id])
+  counterparty          Counterparty?     @relation(fields: [counterpartyId], references: [id])
+  settlementWallet      Wallet?           @relation("SettlementWallet", fields: [settlementWalletId], references: [id])
+  approvals             Approval[]
+  transfers             StablecoinTransfer[]
+  journalEntries        JournalEntry[]    @relation("MintJournalEntries")
+  evidenceFiles         EvidenceFile[]
+  providerInstructions  ProviderInstruction[]
+
+  @@map("mint_requests")
+}
+
+// ─── Redemption Requests ──────────────────────────────────────────────────────
+
+model RedemptionRequest {
+  id                    String                  @id @default(cuid())
+  entityId              String
+  treasuryAccountId     String
+  initiatedById         String
+  counterpartyId        String?
+  sourceWalletId        String?               // wallet holding USDC/USDT to redeem
+  bankAccountId         String?               // bank account to receive wire
+
+  reference             String?               @unique // e.g. REDEEM-1234567
+  memo                  String?               @db.Text
+  network               NetworkType?
+  requiresApproval      Boolean               @default(false)
+
+  asset                 StablecoinAsset
+  requestedUnits        BigInt                  // stablecoin units to redeem (6 dec)
+  expectedFiatCents     BigInt?
+  receivedFiatCents     BigInt?
+  networkFeeCents       BigInt?
+  custodyFeeCents       BigInt?
+
+  status                RedemptionRequestStatus @default(DRAFT)
+  providerRequestId     String?
+  providerStatus        String?
+  providerResponse      Json?
+  fiatReceiptReference  String?
+  fiatReceivedAt        DateTime?
+  providerSubmittedAt   DateTime?
+  redemptionCompletedAt DateTime?
+  settledAt             DateTime?
+  fthTevVerdict         String?
+  fthTevScore           Int?
+  fthTevRiskTags        Json?
+  fthTevReference       String?
+  fthTevCheckedAt       DateTime?
+  apostleTxHash         String?
+  apostleStatus         String?
+  apostleSettledAt      DateTime?
+  failureReason         String?
+  complianceHoldReason  String?
+  expiresAt             DateTime?
+
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+
+  entity                Entity                  @relation(fields: [entityId], references: [id])
+  treasuryAccount       TreasuryAccount         @relation(fields: [treasuryAccountId], references: [id])
+  initiatedBy           User                    @relation("RedemptionInitiator", fields: [initiatedById], references: [id])
+  counterparty          Counterparty?           @relation(fields: [counterpartyId], references: [id])
+  sourceWallet          Wallet?                 @relation("RedemptionSourceWallet", fields: [sourceWalletId], references: [id])
+  bankAccount           BankAccount?            @relation(fields: [bankAccountId], references: [id])
+  approvals             Approval[]
+  journalEntries        JournalEntry[]          @relation("RedemptionJournalEntries")
+  evidenceFiles         EvidenceFile[]
+  providerInstructions  ProviderInstruction[]
+
+  @@map("redemption_requests")
+}
+
+// ─── Provider Instructions ────────────────────────────────────────────────────
+
+model ProviderInstruction {
+  id                  String   @id @default(cuid())
+  mintRequestId       String?
+  redemptionRequestId String?
+  provider            String   // "circle" | "tether_otc" | "otc_desk"
+  instructionType     String   // "mint_initiate" | "redemption_initiate" | "status_check" | etc.
+  requestPayload      Json
+  responsePayload     Json?
+  httpStatusCode      Int?
+  success             Boolean?
+  externalId          String?
+  createdAt           DateTime @default(now())
+
+  mintRequest         MintRequest?       @relation(fields: [mintRequestId], references: [id])
+  redemptionRequest   RedemptionRequest? @relation(fields: [redemptionRequestId], references: [id])
+
+  @@map("provider_instructions")
+}
+
+// ─── Stablecoin Transfers ─────────────────────────────────────────────────────
+
+model StablecoinTransfer {
+  id              String         @id @default(cuid())
+  mintRequestId   String?
+  fromWalletId    String?
+  toWalletId      String
+  asset           StablecoinAsset
+  network         NetworkType
+  amountUnits     BigInt
+  networkFeeCents BigInt?
+  status          TransferStatus @default(PENDING)
+  txHash          String?
+  blockNumber     BigInt?
+  blockTimestamp  DateTime?
+  explorerUrl     String?
+  notes           String?
+  submittedAt     DateTime?
+  confirmedAt     DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  mintRequest     MintRequest?   @relation(fields: [mintRequestId], references: [id])
+  fromWallet      Wallet?        @relation("FromWallet", fields: [fromWalletId], references: [id])
+  toWallet        Wallet         @relation("ToWallet", fields: [toWalletId], references: [id])
+
+  @@map("stablecoin_transfers")
+}
+
+// ─── Approvals ────────────────────────────────────────────────────────────────
+
+model Approval {
+  id                  String           @id @default(cuid())
+  approverId          String
+  mintRequestId       String?
+  redemptionRequestId String?
+  status              ApprovalStatus   @default(PENDING)
+  decision            ApprovalDecision?
+  comment             String?
+  decisionAt          DateTime?
+  expiresAt           DateTime?
+  createdAt           DateTime         @default(now())
+
+  approver            User             @relation(fields: [approverId], references: [id])
+  mintRequest         MintRequest?     @relation(fields: [mintRequestId], references: [id])
+  redemptionRequest   RedemptionRequest? @relation(fields: [redemptionRequestId], references: [id])
+
+  @@map("approvals")
+}
+
+// ─── Double-Entry Ledger ──────────────────────────────────────────────────────
+
+model LedgerAccount {
+  id          String   @id @default(cuid())
+  code        String   @unique  // e.g. "1001", "2001"
+  name        String
+  type        String   // "ASSET" | "LIABILITY" | "EQUITY" | "REVENUE" | "EXPENSE"
+  currency    String   @default("USD")
+  description String?
+  isSystem    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  journalLines JournalLine[]
+
+  @@map("ledger_accounts")
+}
+
+model JournalEntry {
+  id                  String             @id @default(cuid())
+  entityId            String?
+  mintRequestId       String?
+  redemptionRequestId String?
+  status              JournalEntryStatus @default(DRAFT)
+  memo                String
+  referenceType       String             // "mint" | "redemption" | "transfer" | "fee" | "reconciliation"
+  referenceId         String?
+  postedAt            DateTime?
+  reversedAt          DateTime?
+  reversalEntryId     String?
+  createdAt           DateTime           @default(now())
+
+  entity              Entity?            @relation(fields: [entityId], references: [id])
+  mintRequest         MintRequest?       @relation("MintJournalEntries", fields: [mintRequestId], references: [id])
+  redemptionRequest   RedemptionRequest? @relation("RedemptionJournalEntries", fields: [redemptionRequestId], references: [id])
+  lines               JournalLine[]
+
+  @@map("journal_entries")
+}
+
+model JournalLine {
+  id              String        @id @default(cuid())
+  journalEntryId  String
+  ledgerAccountId String
+  isDebit         Boolean
+  amountCents     BigInt        // always positive; direction determined by isDebit
+  currency        String        @default("USD")
+  description     String?
+  createdAt       DateTime      @default(now())
+
+  journalEntry    JournalEntry  @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+  ledgerAccount   LedgerAccount @relation(fields: [ledgerAccountId], references: [id])
+
+  @@map("journal_lines")
+}
+
+// ─── Event Log ────────────────────────────────────────────────────────────────
+
+model EventLog {
+  id          String   @id @default(cuid())
+  eventType   String   // "mint_request.created" etc.
+  aggregateId String   // the entity being acted on
+  aggregateType String // "MintRequest" | "Entity" | "Wallet" etc.
+  actorId     String?  // userId if by user
+  actorType   String?  // "user" | "system" | "provider"
+  payload     Json
+  metadata    Json     @default("{}")
+  occurredAt  DateTime @default(now())
+
+  @@index([aggregateId, aggregateType])
+  @@index([eventType])
+  @@index([occurredAt])
+  @@map("event_logs")
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  action      String
+  resource    String
+  resourceId  String?
+  ipAddress   String?
+  userAgent   String?
+  requestId   String?
+  details     Json     @default("{}")
+  createdAt   DateTime @default(now())
+
+  user        User?    @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([resource, resourceId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ─── Reconciliation ───────────────────────────────────────────────────────────
+
+model ReconciliationRun {
+  id              String                @id @default(cuid())
+  runDate         DateTime
+  entityId        String?
+  status          ReconciliationStatus  @default(RUNNING)
+  notes           String?
+  startedAt       DateTime              @default(now())
+  completedAt     DateTime?
+  bankBalanceCents            BigInt?
+  providerUsdcBalance         BigInt?   // 6 dec units
+  providerUsdtBalance         BigInt?
+  ledgerUsdcBalance           BigInt?
+  ledgerUsdtBalance           BigInt?
+  onChainUsdcBalance          BigInt?
+  onChainUsdtBalance          BigInt?
+  breakCount      Int                   @default(0)
+  createdAt       DateTime              @default(now())
+
+  breaks          ReconciliationBreak[]
+  reportJobs      ReportJob[]
+
+  @@map("reconciliation_runs")
+}
+
+model ReconciliationBreak {
+  id                    String                  @id @default(cuid())
+  reconciliationRunId   String
+  breakType             ReconciliationBreakType
+  status                BreakStatus             @default(OPEN)
+  description           String
+  amountCents           BigInt?
+  expectedValue         String?
+  actualValue           String?
+  referenceType         String?
+  referenceId           String?
+  investigationNotes    String?
+  resolvedById          String?
+  resolvedAt            DateTime?
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+
+  reconciliationRun     ReconciliationRun       @relation(fields: [reconciliationRunId], references: [id])
+
+  @@map("reconciliation_breaks")
+}
+
+// ─── Bank Wire Events ─────────────────────────────────────────────────────────
+
+model WireEvent {
+  id              String      @id @default(cuid())
+  bankAccountId   String
+  direction       String      // "INBOUND" | "OUTBOUND"
+  amountCents     BigInt
+  currency        String      @default("USD")
+  reference       String?
+  counterpartyName String?
+  counterpartyAccount String?
+  bankReference   String?
+  valueDate       DateTime?
+  status          String      @default("UNMATCHED")  // UNMATCHED | MATCHED | APPLIED
+  matchedToType   String?     // "mint_request" | "redemption_request"
+  matchedToId     String?
+  notes           String?
+  importedAt      DateTime    @default(now())
+  matchedAt       DateTime?
+
+  bankAccount     BankAccount @relation(fields: [bankAccountId], references: [id])
+
+  @@map("wire_events")
+}
+
+model StatementImport {
+  id              String      @id @default(cuid())
+  bankAccountId   String
+  filename        String
+  fileSize        Int
+  fileHash        String
+  storageKey      String      // S3/MinIO object key
+  status          String      @default("PENDING")  // PENDING | PROCESSED | FAILED
+  rowsTotal       Int         @default(0)
+  rowsProcessed   Int         @default(0)
+  rowsErrored     Int         @default(0)
+  errorDetails    Json?
+  importedById    String?
+  processedAt     DateTime?
+  createdAt       DateTime    @default(now())
+
+  bankAccount     BankAccount @relation(fields: [bankAccountId], references: [id])
+
+  @@map("statement_imports")
+}
+
+// ─── Reports ──────────────────────────────────────────────────────────────────
+
+model ReportJob {
+  id                    String            @id @default(cuid())
+  entityId              String?
+  reconciliationRunId   String?
+  type                  ReportType
+  status                ReportJobStatus   @default(QUEUED)
+  parameters            Json              @default("{}")
+  storageKey            String?           // S3 key when complete
+  downloadUrl           String?
+  errorMessage          String?
+  requestedById         String?
+  startedAt             DateTime?
+  completedAt           DateTime?
+  createdAt             DateTime          @default(now())
+
+  entity                Entity?           @relation(fields: [entityId], references: [id])
+  reconciliationRun     ReconciliationRun? @relation(fields: [reconciliationRunId], references: [id])
+
+  @@map("report_jobs")
+}
+
+// ─── Evidence Files ───────────────────────────────────────────────────────────
+
+model EvidenceFile {
+  id                  String             @id @default(cuid())
+  mintRequestId       String?
+  redemptionRequestId String?
+  complianceCaseId    String?
+  filename            String
+  contentType         String
+  fileSize            Int
+  storageKey          String
+  uploadedById        String?
+  description         String?
+  createdAt           DateTime           @default(now())
+
+  mintRequest         MintRequest?       @relation(fields: [mintRequestId], references: [id])
+  redemptionRequest   RedemptionRequest? @relation(fields: [redemptionRequestId], references: [id])
+  complianceCase      ComplianceCase?    @relation(fields: [complianceCaseId], references: [id])
+
+  @@map("evidence_files")
+}
+
+// ─── Webhooks ─────────────────────────────────────────────────────────────────
+
+model WebhookDelivery {
+  id              String                @id @default(cuid())
+  source          String                // "circle" | "bank"
+  rawPayload      Json
+  headers         Json                  @default("{}")
+  eventType       String?               // extracted from payload
+  externalEventId String?               // idempotency
+  status          WebhookDeliveryStatus @default(PENDING)
+  processedAt     DateTime?
+  errorMessage    String?
+  retryCount      Int                   @default(0)
+  receivedAt      DateTime              @default(now())
+
+  @@unique([source, externalEventId])
+  @@map("webhook_deliveries")
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// M1 Assurance OS — Audit, Capability & Claim Assessment Engine
+// ════════════════════════════════════════════════════════════════════════════
+
+enum AuditRunStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+
+  @@map("audit_run_status")
+}
+
+enum CapabilityStatus {
+  LIVE
+  IMPLEMENTED
+  PARTIAL
+  SIMULATED
+  DOCUMENTED_ONLY
+  MISSING
+
+  @@map("capability_status")
+}
+
+enum ConfidenceLevel {
+  HIGH
+  MEDIUM
+  LOW
+  NONE
+
+  @@map("confidence_level")
+}
+
+enum ClaimSupportStatus {
+  SUPPORTED
+  PARTIALLY_SUPPORTED
+  WEAKLY_SUPPORTED
+  UNSUPPORTED
+  MARKETING_ONLY
+  CANNOT_VERIFY
+
+  @@map("claim_support_status")
+}
+
+enum GapSeverity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+  INFORMATIONAL
+
+  @@map("gap_severity")
+}
+
+enum RatingTier {
+  AAA
+  AA
+  A
+  BBB
+  BB
+  B
+  C
+
+  @@map("rating_tier")
+}
+
+// An audit run orchestrates the full evidence-collection + scoring pipeline.
+model AuditRun {
+  id            String         @id @default(cuid())
+  status        AuditRunStatus @default(QUEUED)
+  triggeredBy   String?        // userId or "system"
+  notes         String?
+  overallScore  Float?         // 0–100, populated on completion
+  ratingTier    RatingTier?    // derived from overallScore
+  schemaVersion String         @default("1.0.0")
+
+  capabilities  CapabilityAssessment[]
+  claims        ClaimAssessment[]
+  gapItems      AssuranceGapItem[]
+  ratingScores  AssuranceRatingScore[]
+  snapshot      AuditSnapshot?
+
+  errorMessage  String?        // set when status = FAILED
+  startedAt     DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@map("audit_runs")
+}
+
+// Per-capability scored assessment within an audit run.
+model CapabilityAssessment {
+  id              String           @id @default(cuid())
+  auditRunId      String
+  capabilityKey   String           // unique slug, e.g. "entity_management"
+  category        String           // e.g. "CORE_INFRASTRUCTURE"
+  title           String
+  description     String
+  status          CapabilityStatus
+  confidence      ConfidenceLevel
+  maturityScore   Float            // 0–100
+  evidenceSummary String?
+  gaps            String[]
+  notes           String?
+
+  auditRun  AuditRun               @relation(fields: [auditRunId], references: [id], onDelete: Cascade)
+  evidence  CapabilityEvidenceItem[]
+
+  createdAt DateTime @default(now())
+
+  @@unique([auditRunId, capabilityKey])
+  @@map("capability_assessments")
+}
+
+// Individual evidence items linked to a capability assessment.
+model CapabilityEvidenceItem {
+  id           String @id @default(cuid())
+  assessmentId String
+  evidenceType String // "schema_model" | "api_route" | "package_file" | "doc_file" | "worker_job"
+  reference    String // e.g. "prisma:MintRequest", "route:mintRequests"
+  description  String
+  found        Boolean @default(false)
+  weight       Float   @default(1.0)
+
+  assessment CapabilityAssessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
+  @@map("capability_evidence_items")
+}
+
+// Per-claim truthfulness assessment within an audit run.
+model ClaimAssessment {
+  id           String             @id @default(cuid())
+  auditRunId   String
+  claimKey     String
+  category     String
+  claim        String             // verbatim public-facing claim
+  source       String             // e.g. "M1/README.md", "M1/index.html"
+  support      ClaimSupportStatus
+  confidence   ConfidenceLevel
+  evidenceRefs String[]
+  analystNote  String?
+
+  auditRun AuditRun @relation(fields: [auditRunId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([auditRunId, claimKey])
+  @@map("claim_assessments")
+}
+
+// Identified gaps with severity, remediation guidance, and resolution tracking.
+model AssuranceGapItem {
+  id             String      @id @default(cuid())
+  auditRunId     String
+  gapKey         String
+  severity       GapSeverity
+  category       String
+  title          String
+  description    String
+  affectedClaims String[]
+  remediation    String
+  effortEstimate String?     // "days" | "weeks" | "months"
+  externalDep    Boolean     @default(false)
+  resolved       Boolean     @default(false)
+  resolvedAt     DateTime?
+  resolvedNote   String?
+
+  auditRun AuditRun @relation(fields: [auditRunId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([auditRunId, gapKey])
+  @@map("assurance_gap_items")
+}
+
+// Category-level rating score for a run.
+model AssuranceRatingScore {
+  id         String     @id @default(cuid())
+  auditRunId String
+  category   String     // e.g. "FINANCIAL_CONTROLS"
+  label      String     // human label
+  score      Float      // 0–100
+  weight     Float      @default(1.0)
+  tier       RatingTier
+  notes      String?
+
+  auditRun AuditRun @relation(fields: [auditRunId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([auditRunId, category])
+  @@map("assurance_rating_scores")
+}
+
+// Full serialized audit snapshot for offline export and archival.
+model AuditSnapshot {
+  id         String   @id @default(cuid())
+  auditRunId String   @unique
+  payload    Json     // full AuditResult as JSON
+  checksum   String?  // SHA-256 of payload for integrity
+
+  auditRun AuditRun @relation(fields: [auditRunId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@map("audit_snapshots")
+}
