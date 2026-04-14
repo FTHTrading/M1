@@ -68,6 +68,7 @@ institutional treasury management, and regulatory-compliant order execution.
 - [Audit & Reporting](#-audit--reporting)
 
 **⚫ Infrastructure**
+- [FTH L1 Execution Runtime](#-fth-l1-execution-runtime)
 - [System Architecture](#️-architecture)
 - [Execution Flow](#-execution-flow)
 - [API Surface](#-api-surface)
@@ -113,6 +114,13 @@ graph TB
         LEDGER["Double-Entry Ledger"]
     end
 
+    subgraph L1_LAYER["⚫  FTH L1 Verification Runtime"]
+        TEV["Cryptographic Tx Gate · Ed25519"]
+        MARS["Deterministic State Machine"]
+        TAR["Immutable Append-Only Store"]
+        CONS["BFT Consensus · 2/3 Quorum"]
+    end
+
     subgraph TREASURY_LAYER["🟠  Treasury Layer"]
         TSO["Stablecoin Treasury OS"]
         USDF["USDF · Multi-Chain Stablecoin"]
@@ -147,7 +155,11 @@ graph TB
     RISK --> TSO
     OMS  --> SETTLE
     SETTLE --> LEDGER
-    SETTLE --> APO
+    SETTLE --> TEV
+    TEV    --> MARS
+    MARS   --> TAR
+    MARS   --> CONS
+    CONS   --> APO
     TSO  --> USDF
     TSO  --> BANK
     TSO  --> CIRCLE
@@ -162,6 +174,8 @@ graph TB
     CLAW --> ORACLE
     LEDGER --> BANK
 
+    classDef l1 fill:#1e1e2e,stroke:#ffffff,color:#fff
+
     class WEB,CLI,AGT entry
     class OMS,SETTLE,LEDGER exec
     class TSO,USDF,BANK treasury
@@ -169,6 +183,7 @@ graph TB
     class XRPL,XLM,ETH,SOL chain
     class FINN,CLAW,ORACLE ai
     class KYC,REG,RISK comp
+    class TEV,MARS,TAR,CONS l1
 ```
 
 ---
@@ -303,6 +318,20 @@ flowchart LR
 | **Reconciliation** | Real-time break detection + auto-reporting |
 | **MintRequest States** | `DRAFT → PENDING_APPROVAL → AWAITING_BANK_FUNDING → BANK_FUNDED → SUBMITTED_TO_PROVIDER → MINT_COMPLETED → SETTLED` |
 | **RedemptionRequest States** | `DRAFT → PENDING_APPROVAL → SUBMITTED_TO_PROVIDER → PROVIDER_PROCESSING → FIAT_RECEIVED → SETTLED` |
+
+### ⚫ FTH L1 Execution Runtime
+
+> The FTH L1 Runtime is the cryptographic fraud prevention and execution integrity layer that sits between the settlement engine and the on-chain ledger. Every settlement instruction must pass through this runtime before it is committed — no exceptions.
+
+| Property | Value |
+|:---------|:------|
+| **Tx Gate** | Ed25519 signature verification on every instruction — unsigned or malformed transactions are rejected before they reach the execution engine |
+| **Execution Model** | Deterministic state machine — identical inputs always produce identical outputs, enabling independent replay and proof of any historical settlement |
+| **Storage** | Append-only, atomic writes — committed records cannot be modified or deleted, providing a tamper-evident audit backbone |
+| **Consensus** | BFT 2/3+ quorum — no single operator or node can forge finality; requires supermajority validator agreement |
+| **Replay Protection** | Nonce-based — prevents duplicate or re-submitted transaction attacks |
+| **Transport Format** | 96-byte signed payload — `[tx_data][public_key_32B][signature_64B]` |
+| **Fraud Model** | Four-layer defence: signature gate → deterministic execution → immutable record → consensus finality |
 
 ### 🟡 Apostle Chain
 
@@ -476,6 +505,7 @@ pnpm dev
 | `apps/api` | Fastify 4 | 4000 | REST API · auth · business logic |
 | `apps/web` | Next.js 15 | 3000 | Operator dashboard (App Router) |
 | `apps/worker` | BullMQ | — | Async job processors |
+| FTH L1 Runtime | Rust | — | Cryptographic verification + deterministic execution |
 | Apostle Chain | Rust · Axum | 7332 | Settlement ledger |
 | Sovereign AI Agent | Python | 7700 | Sovereign AI agent |
 | Execution Agent | Python | 8089 | Execution agent hub |
@@ -528,6 +558,10 @@ M1/
 | **API** | Rate limiting · IP allowlisting · CORS |
 | **Secrets** | Vault-compatible env isolation |
 | **Audit** | Immutable event store · SIEM-ready structured logs |
+| **L1 Tx Gate** | Every settlement instruction passes Ed25519 verification in the FTH L1 Runtime before execution — no unsigned instruction reaches the state machine |
+| **L1 Determinism** | State machine execution is fully deterministic — every settlement transition is independently reproducible and auditable |
+| **L1 Immutability** | Append-only atomic writes — no committed record can be modified, deleted, or backdated |
+| **L1 Consensus** | BFT 2/3 quorum finality — forging consensus requires controlling >1/3 of validators simultaneously |
 | **Chain** | Ed25519 signatures on every TxEnvelope · hash verification |
 | **Compliance** | Per-entity policy gates before any financial operation |
 
@@ -542,8 +576,8 @@ M1/
 [![FTH Trading](https://img.shields.io/badge/FTH%20Trading-Sovereign%20Finance-0d0d1a?style=for-the-badge)](https://github.com/FTHTrading)
 [![Apostle Chain](https://img.shields.io/badge/Apostle%20Chain-7332-0099ff?style=for-the-badge)](/)
 [![USDF](https://img.shields.io/badge/USDF-Multi%20Chain-ff6b35?style=for-the-badge)](/)
-[![AI](https://img.shields.io/badge/Powered%20by-Finn%20%2B%20ClawBot-5352ed?style=for-the-badge)](/)
+[![Runtime](https://img.shields.io/badge/FTH%20L1%20Runtime-Verified%20Execution-ffffff?style=for-the-badge&labelColor=1e1e2e)](/)
 
-*Built with precision · Secured by design · Powered by AI*
+*Built with precision · Secured by design · Verified by architecture*
 
 </div>

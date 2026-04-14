@@ -754,6 +754,8 @@
           <div class="mb-item" style="color:var(--primary); border-color:rgba(0,153,255,.25);">12-account GAAP double-entry ledger</div>
           <div class="mb-item" style="color:var(--primary); border-color:rgba(0,153,255,.25);">3-way ledger / bank / provider reconciliation</div>
           <div class="mb-item" style="color:var(--primary); border-color:rgba(0,153,255,.25);">Full event sourcing — immutable audit chain</div>
+          <div class="mb-item" style="color:var(--green); border-color:rgba(0,230,118,.25);">FTH L1 Runtime — cryptographic tx verification gate</div>
+          <div class="mb-item" style="color:var(--green); border-color:rgba(0,230,118,.25);">Deterministic state machine — every settlement independently provable</div>
         </div>
       </div>
       <div class="mb-arrow-wrap">→</div>
@@ -891,7 +893,7 @@
       <div class="pillar-icon" style="--icon-bg:rgba(124,58,237,.12);">🤖</div>
       <div class="pillar-title">AI-Powered Execution</div>
       <div class="pillar-desc">
-        Finn, our sovereign AI, and ClawBot v2 handle automated workflows, real-time
+        Sovereign AI agents handle automated workflows, real-time
         compliance checks, and AI-to-AI payment rails via the x402 protocol —
         materially reducing manual operational burden.
       </div>
@@ -971,6 +973,8 @@
       <div class="step-num">6</div>
       <div class="step-title">Chain Settlement</div>
       <div class="step-desc">
+        Every settlement instruction passes through the FTH L1 cryptographic verification
+        gate — Ed25519 signature checked, nonce validated, replay attacks blocked.
         Stablecoins minted on the target chain via Circle or OTC provider.
         Transaction anchored on Apostle Chain. Client wallet credited.
         Near real-time settlement confirmation returned to the settlement engine.
@@ -1332,9 +1336,17 @@
         <p style="font-size:.84rem;color:var(--muted);margin:.35rem 0 .8rem;">
           The platform is architected so that compliance controls — AML screening, velocity
           limits, multi-signatory approval, audit event sourcing, and OFAC checks — are
-          structural components, not optional add-ons. Settlement and compliance events are
-          recorded to the Apostle Chain ledger (chain ID 7332), providing a tamper-evident
-          audit record available for regulatory review, reconciliation, and reporting.
+          structural components, not optional add-ons. Every settlement instruction passes
+          through the FTH L1 Execution Runtime: a cryptographic verification gate that
+          validates Ed25519 signatures, enforces nonce ordering, and blocks replay attacks
+          before any instruction reaches the state machine. The L1’s deterministic execution
+          model means any historical settlement can be independently replayed and proven.
+          Committed records are append-only and cannot be modified, deleted, or backdated.
+          BFT consensus requires supermajority validator agreement before finality is issued —
+          no single operator can force through a fraudulent settlement. Final settlement and
+          compliance events are anchored to the Apostle Chain ledger (chain ID 7332),
+          providing a tamper-evident audit record available for regulatory review, reconciliation,
+          and reporting.
         </p>
         <div class="edd-tags">
           <span class="edd-tag">AML / KYC Screening</span>
@@ -1342,6 +1354,12 @@
           <span class="edd-tag">OFAC SDN Real-Time Check</span>
           <span class="edd-tag">Velocity &amp; Threshold Controls</span>
           <span class="edd-tag">Multi-Signatory Approval</span>
+          <span class="edd-tag">FTH L1 Cryptographic Tx Gate</span>
+          <span class="edd-tag">Ed25519 Signature Verification</span>
+          <span class="edd-tag">Nonce &amp; Replay Protection</span>
+          <span class="edd-tag">Deterministic Replay Audit</span>
+          <span class="edd-tag">BFT 2/3 Consensus Finality</span>
+          <span class="edd-tag">Append-Only Immutable History</span>
           <span class="edd-tag">On-Chain Audit Anchoring</span>
           <span class="edd-tag">FATF Risk Flagging</span>
           <span class="edd-tag">Configurable Reporting Exports</span>
