@@ -19,6 +19,48 @@
       --text:      #e8eaf0;
       --muted:     #6b7280;
       --radius:    12px;
+      --nav-bg:    rgba(8,9,15,0.85);
+      --shadow:    0 2px 12px rgba(0,0,0,.25);
+    }
+
+    /* ─── LIGHT THEME ─────────────────────── */
+    html.light {
+      --bg:        #f8f9fc;
+      --surface:   #ffffff;
+      --card:      #f1f3f9;
+      --border:    #dde1ed;
+      --primary:   #0077cc;
+      --accent:    #6d28d9;
+      --green:     #059669;
+      --orange:    #ea580c;
+      --yellow:    #d97706;
+      --text:      #0f1120;
+      --muted:     #6b7280;
+      --nav-bg:    rgba(248,249,252,0.9);
+      --shadow:    0 2px 12px rgba(0,0,0,.08);
+    }
+
+    html.light .grad-text {
+      background: linear-gradient(135deg, #0f1120 30%, var(--primary) 70%, var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    html.light .hero-glow {
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 0%,   rgba(0,119,204,.08) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 80% 60%,  rgba(109,40,217,.06) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 30% at 20% 70%,  rgba(5,150,105,.05) 0%, transparent 60%);
+    }
+
+    html.light .rm-tag {
+      background: rgba(0,0,0,.04);
+    }
+
+    html.light .cta-section {
+      background: linear-gradient(135deg,
+        rgba(0,119,204,.05) 0%,
+        rgba(109,40,217,.04) 50%,
+        rgba(0,119,204,.05) 100%);
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -35,13 +77,30 @@
     /* ─── NAV ─────────────────────────────── */
     nav {
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      background: rgba(8,9,15,0.85);
+      background: var(--nav-bg);
       backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border);
       padding: 0 5%;
       display: flex; align-items: center; justify-content: space-between;
       height: 64px;
+      transition: background .3s, border-color .3s;
     }
+
+    /* ─── THEME TOGGLE ─────────────────────── */
+    .theme-toggle {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: .35rem .75rem;
+      cursor: pointer;
+      display: flex; align-items: center; gap: .4rem;
+      font-size: .8rem; font-weight: 600; color: var(--muted);
+      transition: background .2s, border-color .2s, color .2s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .theme-toggle:hover { border-color: var(--primary); color: var(--text); }
+    .theme-toggle .t-icon { font-size: 1rem; line-height: 1; }
 
     .nav-logo {
       font-size: 1.25rem; font-weight: 800; letter-spacing: -0.5px;
@@ -440,6 +499,12 @@
       footer     { flex-direction: column; text-align: center; }
       .footer-links { justify-content: center; }
     }
+
+    /* smooth theme transition on all backgrounds */
+    body, nav, .stats-bar, .pillar-card, .step-card, .flow-diagram,
+    .flow-node, .cap-card, .roadmap-item, footer {
+      transition: background .3s, border-color .3s, color .3s;
+    }
   </style>
 </head>
 <body>
@@ -454,6 +519,10 @@
     <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#contact" class="nav-cta">Get Started</a></li>
   </ul>
+  <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+    <span class="t-icon" id="themeIcon">☀️</span>
+    <span id="themeLabel">Light</span>
+  </button>
 </nav>
 
 <!-- HERO -->
@@ -919,7 +988,39 @@
 </footer>
 
 <script>
-  // Scroll reveal
+  // ── Theme toggle ──────────────────────────
+  const html    = document.documentElement;
+  const btn     = document.getElementById('themeToggle');
+  const icon    = document.getElementById('themeIcon');
+  const label   = document.getElementById('themeLabel');
+
+  // Persist preference
+  const saved = localStorage.getItem('m1-theme');
+  if (saved === 'light') applyLight();
+
+  btn.addEventListener('click', () => {
+    if (html.classList.contains('light')) {
+      applyDark();
+      localStorage.setItem('m1-theme', 'dark');
+    } else {
+      applyLight();
+      localStorage.setItem('m1-theme', 'light');
+    }
+  });
+
+  function applyLight() {
+    html.classList.add('light');
+    icon.textContent  = '🌙';
+    label.textContent = 'Dark';
+  }
+
+  function applyDark() {
+    html.classList.remove('light');
+    icon.textContent  = '☀️';
+    label.textContent = 'Light';
+  }
+
+  // ── Scroll reveal ─────────────────────────
   const observer = new IntersectionObserver(
     (entries) => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }),
     { threshold: 0.12 }
