@@ -505,6 +505,107 @@
     .flow-node, .cap-card, .roadmap-item, footer {
       transition: background .3s, border-color .3s, color .3s;
     }
+
+    /* ─── MONETARY ARCHITECTURE ────────────── */
+    .monetary-section {
+      padding: 6rem 5%;
+    }
+
+    .monetary-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .money-bridge {
+      display: flex; align-items: stretch;
+      margin: 3.5rem auto 0; max-width: 960px;
+      border: 1px solid var(--border); border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .mb-side {
+      flex: 1; padding: 2rem 1.5rem;
+      background: var(--card); text-align: center;
+    }
+
+    .mb-center {
+      flex: 1.4; padding: 2rem 1.5rem;
+      background: rgba(0,153,255,.04);
+      border-left: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      text-align: center;
+    }
+
+    .mb-label {
+      font-size: .7rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .12em; color: var(--muted); margin-bottom: .6rem;
+    }
+
+    .mb-title {
+      font-size: 1rem; font-weight: 800; color: var(--text); margin-bottom: .75rem;
+    }
+
+    .mb-items {
+      display: flex; flex-direction: column; gap: .35rem;
+    }
+
+    .mb-item {
+      font-size: .8rem; color: var(--muted);
+      background: rgba(255,255,255,.03); border: 1px solid var(--border);
+      border-radius: 4px; padding: .3rem .75rem;
+    }
+
+    .mb-arrow-wrap {
+      display: flex; align-items: center; padding: 0 .75rem;
+      color: var(--muted); font-size: 1.25rem; flex-shrink: 0;
+    }
+
+    /* ─── INSTITUTIONAL TIERS ───────────────── */
+    .tier-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.25rem; margin-top: 2.5rem;
+    }
+
+    .tier-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.75rem;
+      transition: border-color .2s, transform .2s;
+    }
+
+    .tier-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+
+    .tier-icon { font-size: 1.8rem; margin-bottom: .75rem; }
+    .tier-title { font-weight: 700; font-size: 1rem; margin-bottom: .3rem; }
+    .tier-range { font-size: .8rem; font-weight: 700; color: var(--primary); margin-bottom: .6rem; }
+    .tier-desc { font-size: .88rem; color: var(--muted); line-height: 1.65; }
+
+    /* ─── DEPTH METRICS BAR ─────────────────── */
+    .depth-bar {
+      display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center;
+      margin-top: 3rem; padding: 2rem 1.5rem;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    .depth-metric { text-align: center; flex: 1; min-width: 110px; }
+
+    .dm-val {
+      font-size: 1.5rem; font-weight: 800;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .dm-label {
+      font-size: .72rem; color: var(--muted); margin-top: .25rem;
+      text-transform: uppercase; letter-spacing: .06em;
+    }
+
+    @media (max-width: 700px) {
+      .money-bridge { flex-direction: column; }
+      .mb-arrow-wrap { padding: .5rem 0; justify-content: center; transform: rotate(90deg); }
+      .mb-center { border-left: none; border-right: none; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    }
   </style>
 </head>
 <body>
@@ -513,6 +614,7 @@
 <nav>
   <span class="nav-logo">M1 · FTH Trading</span>
   <ul class="nav-links">
+    <li><a href="#m1-architecture">Why M1</a></li>
     <li><a href="#what-we-do">Platform</a></li>
     <li><a href="#how-it-works">How It Works</a></li>
     <li><a href="#capabilities">Capabilities</a></li>
@@ -538,9 +640,10 @@
       Rebuilt for the<br />Modern Economy
     </h1>
     <p class="hero-sub">
-      M1 is FTH Trading's sovereign execution platform — connecting regulated financial
-      institutions, stablecoin issuance, multi-chain settlement, and AI-powered payment
-      rails into one unified, compliant infrastructure.
+      M1 converts institutional fiat money — bank wires, demand deposits, reserve
+      balances — into programmable on-chain value. A full monetary operating system
+      for corporate treasuries, sovereign wealth funds, and regulated financial
+      institutions operating at real-world scale.
     </p>
     <div class="hero-actions">
       <a href="#how-it-works" class="btn-primary">See How It Works</a>
@@ -572,6 +675,146 @@
     <div class="stat-label">Compliant Architecture</div>
   </div>
 </div>
+
+<!-- M1 MONETARY ARCHITECTURE -->
+<section class="monetary-section" id="m1-architecture">
+  <div class="monetary-inner">
+    <div class="reveal" style="text-align:center;">
+      <span class="section-tag">The M1 Name</span>
+      <h2>Not a Label.<br/>The First Layer of Money.</h2>
+      <p class="section-desc">
+        M1 is the economic term for the most liquid stratum of the money supply:
+        physical currency, demand deposits, and checking account balances. When an
+        institution moves capital via bank wire, that is M1 money in motion. Our
+        platform sits exactly at that conversion point — receiving M1 fiat, enforcing
+        full institutional controls, and issuing programmable on-chain value backed 1:1
+        by held reserves.
+      </p>
+    </div>
+
+    <!-- Fiat → Platform → Digital Bridge -->
+    <div class="money-bridge reveal">
+      <div class="mb-side">
+        <div class="mb-label">Input</div>
+        <div class="mb-title">M1 Fiat Money</div>
+        <div class="mb-items">
+          <div class="mb-item">Bank wire transfers</div>
+          <div class="mb-item">Demand deposit accounts</div>
+          <div class="mb-item">Institutional reserve balances</div>
+          <div class="mb-item">Corporate treasury cash</div>
+          <div class="mb-item">Custodial client funds</div>
+        </div>
+      </div>
+      <div class="mb-arrow-wrap">→</div>
+      <div class="mb-center">
+        <div class="mb-label">M1 Platform — Monetary Operating System</div>
+        <div class="mb-title">Every Dollar Governed, Every Entry Auditable</div>
+        <div class="mb-items">
+          <div class="mb-item" style="color:var(--primary); border-color:rgba(0,153,255,.25);">8-stage settlement workflow</div>
+          <div class="mb-item" style="color:var(--primary); border-color:rgba(0,153,255,.25);">7-rule compliance engine + OFAC screening</div>
+          <div class="mb-item" style="color:var(--primary); border-color:rgba(0,153,255,.25);">Dual-custody multi-signature approval</div>
+          <div class="mb-item" style="color:var(--primary); border-color:rgba(0,153,255,.25);">12-account GAAP double-entry ledger</div>
+          <div class="mb-item" style="color:var(--primary); border-color:rgba(0,153,255,.25);">3-way ledger / bank / provider reconciliation</div>
+          <div class="mb-item" style="color:var(--primary); border-color:rgba(0,153,255,.25);">Full event sourcing — immutable audit chain</div>
+        </div>
+      </div>
+      <div class="mb-arrow-wrap">→</div>
+      <div class="mb-side">
+        <div class="mb-label">Output</div>
+        <div class="mb-title">Programmable Money</div>
+        <div class="mb-items">
+          <div class="mb-item">USDC on target chain</div>
+          <div class="mb-item">USDT on target chain</div>
+          <div class="mb-item">Sovereign ledger anchored</div>
+          <div class="mb-item">GAAP journal entry posted</div>
+          <div class="mb-item">Reconciliation confirmed</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Who operates at this scale -->
+    <div class="reveal" style="text-align:center; margin-top:4.5rem;">
+      <span class="section-tag">Institutional Scale</span>
+      <h2 style="font-size:1.8rem;">Who This Infrastructure Serves</h2>
+      <p class="section-desc">
+        The velocity limits, approval thresholds, reserve architecture, and compliance
+        controls are not decorative — they are calibrated for institutions moving
+        real treasury capital under regulatory oversight.
+      </p>
+    </div>
+
+    <div class="tier-grid">
+      <div class="tier-card reveal">
+        <div class="tier-icon">🏢</div>
+        <div class="tier-title">Corporate Treasury</div>
+        <div class="tier-range">$10M – $500M+ in Operations</div>
+        <div class="tier-desc">
+          Convert idle bank deposits into yield-bearing stablecoins. Manage multi-currency
+          treasury positions across chains with full ERP/accounting sync, configurable
+          transaction limits, and role-segregated approval workflows.
+        </div>
+      </div>
+
+      <div class="tier-card reveal">
+        <div class="tier-icon">🌐</div>
+        <div class="tier-title">Sovereign &amp; Institutional Funds</div>
+        <div class="tier-range">$100M – Multi-Billion Reserves</div>
+        <div class="tier-desc">
+          Sovereign wealth funds and large asset managers need reserve management,
+          sanctions screening, velocity controls, and dual-custody approval. Every
+          limit is configurable and every action is auditable to regulatory standard.
+        </div>
+      </div>
+
+      <div class="tier-card reveal">
+        <div class="tier-icon">🏦</div>
+        <div class="tier-title">Banks &amp; Broker-Dealers</div>
+        <div class="tier-range">Regulated Client Cash Flows</div>
+        <div class="tier-desc">
+          Convert client cash balances to digital assets under SEC and FINRA rules.
+          Maintain segregated ledger accounts per entity. Full audit trail, automated
+          regulatory reporting, and OTC settlement desk integration built in.
+        </div>
+      </div>
+    </div>
+
+    <!-- System depth bar -->
+    <div class="depth-bar reveal">
+      <div class="depth-metric">
+        <div class="dm-val">12</div>
+        <div class="dm-label">COA Accounts</div>
+      </div>
+      <div class="depth-metric">
+        <div class="dm-val">8</div>
+        <div class="dm-label">Settlement Stages</div>
+      </div>
+      <div class="depth-metric">
+        <div class="dm-val">7</div>
+        <div class="dm-label">Compliance Rules</div>
+      </div>
+      <div class="depth-metric">
+        <div class="dm-val">3-Way</div>
+        <div class="dm-label">Reconciliation</div>
+      </div>
+      <div class="depth-metric">
+        <div class="dm-val">Dual</div>
+        <div class="dm-label">Custody Approval</div>
+      </div>
+      <div class="depth-metric">
+        <div class="dm-val">1:1</div>
+        <div class="dm-label">Full Reserve Backed</div>
+      </div>
+      <div class="depth-metric">
+        <div class="dm-val">Event</div>
+        <div class="dm-label">Sourced Ledger</div>
+      </div>
+      <div class="depth-metric">
+        <div class="dm-val">&lt;100ms</div>
+        <div class="dm-label">Compliance Gate</div>
+      </div>
+    </div>
+  </div>
+</section>
 
 <!-- WHAT WE DO -->
 <section class="pillars" id="what-we-do">
@@ -631,10 +874,11 @@
 <section id="how-it-works">
   <div class="reveal">
     <span class="section-tag">How It Works</span>
-    <h2>Simple Steps, Powerful<br/>Infrastructure Behind Them</h2>
+    <h2>The 8-Stage<br/>Settlement Lifecycle</h2>
     <p class="section-desc">
-      From client onboarding to final settlement — here is the entire lifecycle
-      of a transaction on M1, simplified.
+      From wire receipt to settled on-chain position — every stage of the M1 monetary
+      workflow, governed by institutional-grade controls and posted to a GAAP-compliant
+      double-entry ledger in real time.
     </p>
   </div>
 
@@ -686,10 +930,31 @@
 
     <div class="step-card reveal">
       <div class="step-num">6</div>
-      <div class="step-title">Settlement</div>
+      <div class="step-title">Chain Settlement</div>
       <div class="step-desc">
-        Stablecoins minted on the target chain. Confirmed on Apostle Chain.
-        Journal entry posted. Client wallet credited. Done in under 3 seconds.
+        Stablecoins minted on the target chain via Circle or OTC provider.
+        Transaction anchored on Apostle Chain. Client wallet credited.
+        Confirmation returned to the settlement engine in under 3 seconds.
+      </div>
+    </div>
+
+    <div class="step-card reveal">
+      <div class="step-num">7</div>
+      <div class="step-title">Ledger Posting</div>
+      <div class="step-desc">
+        Automated GAAP journal entry posted across the 12-account Chart of
+        Accounts. Fiat cash debited, stablecoin inventory credited, client
+        obligations settled. Every debit matches every credit.
+      </div>
+    </div>
+
+    <div class="step-card reveal">
+      <div class="step-num">8</div>
+      <div class="step-title">3-Way Reconciliation</div>
+      <div class="step-desc">
+        Ledger balances reconciled against bank statement and provider data.
+        Breaks above tolerance threshold trigger automated alerts. Full
+        reconciliation report generated and exportable for audit.
       </div>
     </div>
   </div>
