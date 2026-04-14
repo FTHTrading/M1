@@ -58,8 +58,8 @@ institutional treasury management, and regulatory-compliant order execution.
 <td>
 
 **🔵 AI Execution**
-- [Finn Sovereign AI](#-finn-sovereign-ai)
-- [ClawBot v2](#-clawbot-v2)
+- [Sovereign AI Agent](#-sovereign-ai-agent)
+- [Execution Agent](#-execution-agent)
 - [Oracle Spine Tool Registry](#-oracle-spine)
 
 **🟣 Compliance & Risk**
@@ -133,8 +133,8 @@ graph TB
     end
 
     subgraph AI_LAYER["🔵  AI Execution"]
-        FINN["Finn · Sovereign AI  :7700"]
-        CLAW["ClawBot v2  :8089"]
+        FINN["Sovereign AI Agent  :7700"]
+        CLAW["Execution Agent Hub  :8089"]
         ORACLE["Oracle Spine"]
     end
 
@@ -329,29 +329,27 @@ flowchart LR
 | **Registered Agents** | 35+ |
 | **Billing** | OpenMeter · usage metering |
 
-### 🔵 Finn Sovereign AI
+### 🔵 Sovereign AI Agent
 
 | Property | Value |
 |:---------|:------|
-| **Runtime** | Python · PyTorch 2.10+cu128 |
-| **GPU** | RTX 5090 · 24 GB VRAM · Compute 12.0 · 82 SMs |
-| **LLM** | NIM `llama-3.1-nemotron-nano-8b-v1` |
-| **Inference** | LocalCudaBackend → Ollama → OpenAI (fallback) |
-| **Embeddings** | Triton TRT · bge-small-onnx · 384-dim |
-| **Voice** | Piper TTS · Whisper STT |
-| **Biometrics** | InsightFace ArcFace + Resemblyzer voice |
+| **Runtime** | Python · GPU-accelerated |
+| **Inference** | Local GPU inference with cloud fallback |
+| **Embeddings** | High-dimensional vector search |
+| **Voice** | Text-to-speech · Speech-to-text |
+| **Biometrics** | Face + voice authentication |
 | **Port** | 7700 |
 | **Tools** | Oracle Spine — 7 subsystem registries |
 
-### 🔵 ClawBot v2
+### 🔵 Execution Agent
 
 | Property | Value |
 |:---------|:------|
-| **Architecture** | Inference Router → Speech Router → Ollama |
+| **Architecture** | Tiered inference routing with speech capability |
 | **Core Port** | 8089 |
 | **Executors** | Marketing (8101) · Coding (8103) · DevOps (8104) |
-| **LLM Latency** | ~1.4 s roundtrip via NIM |
-| **Embeddings** | Triton TRT · 266 ms warm |
+| **LLM Latency** | ~1.4 s roundtrip |
+| **Embeddings** | GPU-accelerated · sub-300 ms warm |
 
 ### 🟢 Live On-Chain Assets
 
@@ -479,11 +477,11 @@ pnpm dev
 | `apps/web` | Next.js 15 | 3000 | Operator dashboard (App Router) |
 | `apps/worker` | BullMQ | — | Async job processors |
 | Apostle Chain | Rust · Axum | 7332 | Settlement ledger |
-| Finn AI | Python | 7700 | Sovereign AI agent |
-| ClawBot Core | Python | 8089 | Execution agent hub |
-| NIM LLM | NVIDIA | 8800 | `llama-3.1-nemotron-nano-8b-v1` |
-| Ollama | Go | 11434 | Local LLM fallback |
-| Triton TRT | C++ | 8000 | GPU embeddings |
+| Sovereign AI Agent | Python | 7700 | Sovereign AI agent |
+| Execution Agent | Python | 8089 | Execution agent hub |
+| Inference Runtime | — | 8800 | Primary LLM inference |
+| Inference Fallback | — | 11434 | Local LLM fallback |
+| Embedding Runtime | — | 8000 | GPU embeddings |
 
 ### Monorepo Layout
 
